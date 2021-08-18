@@ -1,0 +1,3 @@
+name = "modapp"
+tags = ["zephyr", "sample"]
+component_paths = ["./modality-manifests"]

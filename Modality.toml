@@ -1,0 +1,8 @@
+collector_connections = [
+  "udp://192.0.2.2:34333"
+]
+
+# control_connections = [
+#   "udp://192.0.2.1:34555"
+# ]
+
