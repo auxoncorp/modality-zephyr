@@ -16,7 +16,15 @@ component_id,id,name,description,tags,type_hint,file,line
 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,1073741688,MODALITY_CONTROL_MSG_DROPPED,Modulus control message dropped,INTERNAL,u32,,
 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,1073741687,MODALITY_TRIGGER_DROPPED,Modulus trigger control block dropped,INTERNAL,u32,,
 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,1073741686,MODALITY_MUTATION_EPOCH_ADVANCED,Mutation epoch advanced,INTERNAL,u16,,
-2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,1,PRODUCER_STARTED,,,,modapp/src/main.c,51
-2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,2,CONSUMER_STARTED,,,,modapp/src/main.c,77
-2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,3,PRODUCER_SENT,,,u32,modapp/src/main.c,58
+2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,1,PRODUCER_STARTED,,,,modapp/src/main.c,62
+2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,2,CONSUMER_STARTED,,,,modapp/src/main.c,89
+2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,3,PRODUCER_SENT,,,u32,modapp/src/main.c,70
 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,4,CONCUMER_RECEIVED,,,u32,modapp/src/main.c,82
+2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,5,STARTUP_BEGIN,,,,modapp/src/main.c,40
+2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,6,STARTUP_DONE,,,,modapp/src/main.c,47
+2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,7,CONSUMER_RECEIVED,,,u32,modapp/src/main.c,95
+2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,8,K_THREAD_CREATE,,zephyr;syscall;thread,u32,modapp/src/modality_tracing.c,38
+2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,9,K_THREAD_START,,zephyr;syscall;thread,u32,modapp/src/modality_tracing.c,47
+2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,10,K_THREAD_SLEEP,,zephyr;syscall;thread,u32,modapp/src/modality_tracing.c,58
+2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,11,K_FIFO_GET,,zephyr;syscall;fifo,u32,modapp/src/modality_tracing.c,67
+2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,12,K_FIFO_PUT,,zephyr;syscall;fifo,u32,modapp/src/modality_tracing.c,76

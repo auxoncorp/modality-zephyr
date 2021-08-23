@@ -12,24 +12,46 @@
 ./net-setup.sh
 ```
 
-4. Build it
+4. Choose the board config and build
 ```
 west build -b qemu_cortex_m3 --pristine
 ```
 
 5. Set up modality
 ```
-modality sut create .
-modality sut use modapp
-modality sut list
-modality sut component list
+./go-modality.sh
 ```
 
-4. Build it and run it
+6. Build it and run it
 ```
-modality session open ztest modapp
-modality session use ztest
-modality status
 west build -t run
 ```
 
+7. Use your collected traces
+```
+modality log | less
+(etc)
+```
+
+## Usage notes
+### Reporting and Registration
+The 'modality_comms' file has a thread that sends reports back to
+modalityd. Each probe must be registered with the thread using the
+`register_probe` function. For cooperative threads, no more steps are
+needed.  Any tracing done in a pre-emptible thread or an ISR must
+additionally be surrounded by a critical section using `irq_lock` /
+`irq_unlock`.
+
+`register_probe` also uses the thread 'custom data' pointer to store a
+pointer back to the thread's registry entry. This allows trace-point
+instrumentation to use the probe from the current thread.
+
+### Trace point instrumentation
+Zephyr uses a preprocessor-macro based tracing system. Here, we
+provide a replacement `tracing.h` which logs modality messages for
+some of the probes.
+
+modality_tracing.c 
+
+### Mutations
+TODO

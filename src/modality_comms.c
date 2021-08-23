@@ -1,10 +1,10 @@
-#include "modality_comms.h"
-
+#include <zephyr.h>
 #include <assert.h>
 #include <errno.h>
 #include <net/socket.h>
 #include <stdio.h>
-#include <zephyr.h>
+
+#include "modality_comms.h"
 
 #define MODALITY_PROBE_REGISTRY_SIZE 16
 
@@ -24,18 +24,12 @@ K_THREAD_DEFINE(modality_control_plane_thread_id,
                 MODALITY_CONTROL_PLANE_STACK_SIZE, modality_control_plane_run,
                 NULL, NULL, NULL, MODALITY_CONTROL_PLANE_PRIORITY, 0, -1);
 
-typedef struct probe_registry_entry {
-  modality_probe *probe;
-  struct k_fifo *control_fifo;
-  /* k_tid_t thread_id; */
-} probe_registry_entry;
-
 typedef struct probe_registry {
   probe_registry_entry entries[MODALITY_PROBE_REGISTRY_SIZE];
   uint8_t count;
 } probe_registry;
 
-static probe_registry g_probe_registry;
+static probe_registry g_probe_registry = {{{0}}};
 K_MUTEX_DEFINE(g_probe_registry_mutex);
 
 int8_t register_probe(modality_probe *probe, struct k_fifo *control_fifo) {
@@ -44,14 +38,14 @@ int8_t register_probe(modality_probe *probe, struct k_fifo *control_fifo) {
 
   if (g_probe_registry.count >= MODALITY_PROBE_REGISTRY_SIZE) {
     err = PROBE_REGISTRY_FULL;
-    goto done;
+  } else {
+    g_probe_registry.entries[g_probe_registry.count].probe = probe;
+    g_probe_registry.entries[g_probe_registry.count].control_fifo =
+        control_fifo;
+    k_thread_custom_data_set(&g_probe_registry.entries[g_probe_registry.count]);
+    g_probe_registry.count++;
   }
 
-  g_probe_registry.entries[g_probe_registry.count].probe = probe;
-  g_probe_registry.entries[g_probe_registry.count].control_fifo = control_fifo;
-  g_probe_registry.count++;
-
-done:
   k_mutex_unlock(&g_probe_registry_mutex);
   return err;
 }
@@ -59,7 +53,7 @@ done:
 static void send_modality_reports(struct k_work *work);
 
 K_WORK_DELAYABLE_DEFINE(send_modality_reports_delayable, send_modality_reports);
-static void send_modality_reports(struct k_work *work) {
+void send_modality_reports(struct k_work *work) {
   modality_probe *registered_probes[MODALITY_PROBE_REGISTRY_SIZE];
   size_t registered_probe_count = 0;
 
@@ -79,8 +73,12 @@ static void send_modality_reports(struct k_work *work) {
     modality_probe *probe = registered_probes[i];
 
     size_t report_size;
-    const size_t err = modality_probe_report(
-        probe, &g_report_buffer[0], sizeof(g_report_buffer), &report_size);
+
+    int key = irq_lock();
+    int err = modality_probe_report(probe, g_report_buffer,
+                                    sizeof(g_report_buffer), &report_size);
+    irq_unlock(key);
+
     assert(err == MODALITY_PROBE_ERROR_OK);
 
     if (report_size != 0) {
@@ -115,18 +113,9 @@ int start_modality_comms(void) {
     return -errno;
   }
 
-  k_thread_name_set(modality_control_plane_thread_id, "modality_control_plane");
-  k_thread_start(modality_control_plane_thread_id);
-
-  k_work_reschedule(&send_modality_reports_delayable, MODALITY_REPORT_CADENCE);
-
-  printf("done\n");
+  k_work_reschedule(&send_modality_reports_delayable, K_MSEC(0));
 
   return 0;
-}
-
-void stop_modality_comms(void) {
-  k_thread_abort(modality_control_plane_thread_id);
 }
 
 static void modality_control_plane_run() {
@@ -149,15 +138,13 @@ static void modality_control_plane_run() {
     return;
   }
 
-
   do {
     struct sockaddr client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
     static uint8_t recv_buffer[64];
 
-    int received = recvfrom(server_socket, recv_buffer,
-                            sizeof(recv_buffer), 0, &client_addr,
-                            &client_addr_len);
+    int received = recvfrom(server_socket, recv_buffer, sizeof(recv_buffer), 0,
+                            &client_addr, &client_addr_len);
 
     if (received < 0) {
       /* Socket error */
