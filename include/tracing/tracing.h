@@ -1,4 +1,8 @@
-#pragma once
+#ifndef MODALITY_ZEPHYR_INCLUDE_TRACING_TRACING_H_
+#define MODALITY_ZEPHYR_INCLUDE_TRACING_TRACING_H_
+
+// prevent the stock one from being included, somehow
+#define ZEPHYR_INCLUDE_TRACING_TRACING_H_
 
 #include "../modality_tracing.h"
 
@@ -167,8 +171,10 @@
 #define sys_port_trace_k_fifo_peek_head_exit(fifo, ret)
 #define sys_port_trace_k_fifo_peek_tail_enter(fifo)
 #define sys_port_trace_k_fifo_peek_tail_exit(fifo, ret)
+
 #define sys_port_trace_k_fifo_put_list_enter(fifo, head, tail)
 #define sys_port_trace_k_fifo_put_list_exit(fifo, head, tail)
+
 #define sys_port_trace_k_lifo_init_enter(lifo)
 #define sys_port_trace_k_lifo_init_exit(lifo)
 #define sys_port_trace_k_lifo_put_enter(lifo, data)
@@ -261,3 +267,4 @@
 #define sys_port_trace_pm_device_disable_enter(dev)
 #define sys_port_trace_pm_device_disable_exit(dev)
 
+#endif
