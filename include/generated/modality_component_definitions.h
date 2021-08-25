@@ -4,7 +4,7 @@
  * Component:
  *   Name: zephyr-example-component
  *   ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
- *   Code hash: a93a2872f06e261b8cd206d5615156ff6b154e0de81ad5fdddb198298d45d082
+ *   Code hash: 9d2b8fddb6ef2466a2a31dc8de0275aec22bad53082c910d5dc0b7ccec3eb797
  *   Instrumentation hash: d8b97cf8fa96d08a6da4e7d39f8d3011f640898d6362cc8af092bdbc9536ad95
  */
 
@@ -16,7 +16,7 @@ extern "C" {
 #endif
 
 /*
- * Probes (sha3-256 9a3342c369c65ccde3684d15c81692594a316284f539ac1b10945c42c4f84743)
+ * Probes (sha3-256 2449658ce3e6af66a297fb8b9def7228c7b6cf9063b415380ce07fd7a7d85570)
  */
 
 /*
@@ -24,7 +24,7 @@ extern "C" {
  * Description:
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
- * Location: modapp/src/main.c:53
+ * Location: modapp/src/main.c:58
  */
 #define PRODUCER (24850365UL)
 
@@ -33,7 +33,7 @@ extern "C" {
  * Description:
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
- * Location: modapp/src/main.c:80
+ * Location: modapp/src/main.c:86
  */
 #define CONSUMER (908247069UL)
 
@@ -42,12 +42,12 @@ extern "C" {
  * Description:
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
- * Location: modapp/src/main.c:31
+ * Location: modapp/src/main.c:36
  */
 #define MAIN (785032641UL)
 
 /*
- * Events (sha3-256 a7ce504db53bc1e7035f5e947bac37caf0dddf58a9263389bf9aa7b61476e714)
+ * Events (sha3-256 a909bcc92eae3b636e43869b5ddab1118102914f6c14bc7060c865c4cfbceb77)
  */
 
 /*
@@ -56,7 +56,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
  * Payload type:
- * Location: modapp/src/main.c:62
+ * Location: modapp/src/main.c:67
  */
 #define PRODUCER_STARTED (1UL)
 
@@ -66,7 +66,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
  * Payload type:
- * Location: modapp/src/main.c:89
+ * Location: modapp/src/main.c:95
  */
 #define CONSUMER_STARTED (2UL)
 
@@ -76,7 +76,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
  * Payload type: u32
- * Location: modapp/src/main.c:70
+ * Location: modapp/src/main.c:76
  */
 #define PRODUCER_SENT (3UL)
 
@@ -96,7 +96,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
  * Payload type:
- * Location: modapp/src/main.c:40
+ * Location: modapp/src/main.c:45
  */
 #define STARTUP_BEGIN (5UL)
 
@@ -106,7 +106,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
  * Payload type:
- * Location: modapp/src/main.c:47
+ * Location: modapp/src/main.c:52
  */
 #define STARTUP_DONE (6UL)
 
@@ -116,7 +116,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
  * Payload type: u32
- * Location: modapp/src/main.c:95
+ * Location: modapp/src/main.c:102
  */
 #define CONSUMER_RECEIVED (7UL)
 

@@ -14,7 +14,7 @@
 
 4. Choose the board config and build
 ```
-west build -b qemu_cortex_m3 --pristine
+rm -rf build && west build -b qemu_cortex_m3 --pristine
 ```
 
 5. Set up modality

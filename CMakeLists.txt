@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.13.1)
 
+# work around https://github.com/zephyrproject-rtos/zephyr/issues/37912
 include_directories("include")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -include 'tracing/tracing.h'")
 

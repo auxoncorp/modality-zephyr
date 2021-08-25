@@ -19,11 +19,11 @@ void modality_zephyr_k_thread_switched_in() {
       int err;
 
       err = modality_probe_produce_snapshot(last_entry->probe,
-                                                 &last_probe_snapshot);
+                                            &last_probe_snapshot);
       assert(err == MODALITY_PROBE_ERROR_OK);
 
       err = modality_probe_merge_snapshot(current_entry->probe,
-                                               &last_probe_snapshot);
+                                          &last_probe_snapshot);
       assert(err == MODALITY_PROBE_ERROR_OK);
     }
 

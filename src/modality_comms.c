@@ -1,9 +1,11 @@
-#include <zephyr.h>
 #include <assert.h>
 #include <errno.h>
+#include <modality/probe.h>
 #include <net/socket.h>
 #include <stdio.h>
+#include <zephyr.h>
 
+#include "kernel.h"
 #include "modality_comms.h"
 
 #define MODALITY_PROBE_REGISTRY_SIZE 16
@@ -32,7 +34,7 @@ typedef struct probe_registry {
 static probe_registry g_probe_registry = {{{0}}};
 K_MUTEX_DEFINE(g_probe_registry_mutex);
 
-int8_t register_probe(modality_probe *probe, struct k_fifo *control_fifo) {
+int8_t register_probe(modality_probe *probe, struct k_msgq *control_msgq) {
   int8_t err = PROBE_REGISTRY_OK;
   k_mutex_lock(&g_probe_registry_mutex, K_FOREVER);
 
@@ -40,8 +42,8 @@ int8_t register_probe(modality_probe *probe, struct k_fifo *control_fifo) {
     err = PROBE_REGISTRY_FULL;
   } else {
     g_probe_registry.entries[g_probe_registry.count].probe = probe;
-    g_probe_registry.entries[g_probe_registry.count].control_fifo =
-        control_fifo;
+    g_probe_registry.entries[g_probe_registry.count].control_msgq =
+        control_msgq;
     k_thread_custom_data_set(&g_probe_registry.entries[g_probe_registry.count]);
     g_probe_registry.count++;
   }
@@ -115,7 +117,57 @@ int start_modality_comms(void) {
 
   k_work_reschedule(&send_modality_reports_delayable, K_MSEC(0));
 
+  k_thread_start(modality_control_plane_thread_id);
+
   return 0;
+}
+
+#define MAX_CONTROL_MESSAGE_SIZE 124 // == 128 - 4
+#define MAX_CONTROL_MESSAGE_COUNT 4
+
+typedef struct control_message {
+  size_t __reserved;
+  atomic_t refcount;
+  uint8_t data[MAX_CONTROL_MESSAGE_SIZE];
+} control_message;
+
+K_HEAP_DEFINE(control_message_heap, sizeof(control_message) * MAX_CONTROL_MESSAGE_COUNT);
+
+/// Allocate a new control message with a refcount of 1
+control_message *control_message_new() {
+  control_message *msg = NULL;
+  while(msg == NULL) {
+    msg = (control_message *)k_heap_aligned_alloc(&control_message_heap, sizeof(void*),
+                                                  sizeof(control_message), K_FOREVER);
+    // The timeout parameter to k_heap_alloc is a lie in some
+    // configurations. do a sleep-retry loop.
+    if(msg == NULL) {
+      k_sleep(K_MSEC(50));
+    }
+  }
+
+  msg->refcount = ATOMIC_INIT(0);
+  return msg;
+}
+
+void control_message_ref(control_message *msg) {
+  if (msg == NULL) {
+    return;
+  }
+
+  atomic_val_t prev = atomic_inc(&msg->refcount);
+}
+
+void control_message_unref(control_message *msg) {
+  if (msg == NULL) {
+    return;
+  }
+  atomic_val_t prev = atomic_dec(&msg->refcount);
+
+  /// If we just went from 1 -> 0
+  if (prev == 1) {
+    k_heap_free(&control_message_heap, msg);
+  }
 }
 
 static void modality_control_plane_run() {
@@ -141,10 +193,11 @@ static void modality_control_plane_run() {
   do {
     struct sockaddr client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
-    static uint8_t recv_buffer[64];
 
-    int received = recvfrom(server_socket, recv_buffer, sizeof(recv_buffer), 0,
-                            &client_addr, &client_addr_len);
+    control_message *msg = control_message_new();
+    control_message_ref(msg);
+    int received = recvfrom(server_socket, msg->data, MAX_CONTROL_MESSAGE_SIZE,
+                            0, &client_addr, &client_addr_len);
 
     if (received < 0) {
       /* Socket error */
@@ -152,8 +205,50 @@ static void modality_control_plane_run() {
       return;
     }
 
-    printf("Received %d bytes\n", received);
-    printf("TODO distribute to probes\n");
+    {
+      k_mutex_lock(&g_probe_registry_mutex, K_FOREVER);
+
+      int registered_probe_count = g_probe_registry.count;
+      for (int i = 0; i < registered_probe_count; i++) {
+        struct k_msgqw *control_msgq = g_probe_registry.entries[i].control_msgq;
+        if (control_msgq!= NULL) {
+          control_message_ref(msg);
+
+          k_msgq_put(control_msgq, &msg, K_FOREVER);
+        }
+      }
+
+      k_mutex_unlock(&g_probe_registry_mutex);
+    }
+
+    control_message_unref(msg);
 
   } while (true);
+}
+
+void poll_control_plane_messages() {
+  probe_registry_entry *entry =
+      (probe_registry_entry *)k_thread_custom_data_get();
+  if (entry == NULL) {
+    return;
+  }
+
+  if (entry->control_msgq== NULL) {
+    return;
+  }
+
+  while (true) {
+    control_message *msg = NULL;
+    int ret = k_msgq_get(entry->control_msgq, &msg, K_NO_WAIT);
+    if (ret == -ENOMSG || msg == NULL) {
+      return;
+    }
+    size_t _should_forward;
+    /* size_t err = modality_probe_process_control_message( */
+    /*     entry->probe, msg->data, MAX_CONTROL_MESSAGE_SIZE, &_should_forward);
+     */
+    /* assert(err == MODALITY_PROBE_ERROR_OK); */
+
+    control_message_unref(msg);
+  }
 }
