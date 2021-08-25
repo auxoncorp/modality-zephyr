@@ -1,0 +1,14 @@
+name = "delay-mutator"
+tags = []
+source_file = "src/main.c"
+source_line = 64
+
+[[params]]
+name = "delay-ms"
+type = "U32"
+
+[params.constraints]
+minimum_effect_value = 200
+nominal_range = [0, 400]
+safety_range = [0, 400]
+hard_range = [0, 400]

@@ -4,7 +4,7 @@
  * Component:
  *   Name: zephyr-example-component
  *   ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
- *   Code hash: 9d2b8fddb6ef2466a2a31dc8de0275aec22bad53082c910d5dc0b7ccec3eb797
+ *   Code hash: 80649425ea1215baac079b9f9693bc7c076b886da84941eea957616c0f229a59
  *   Instrumentation hash: d8b97cf8fa96d08a6da4e7d39f8d3011f640898d6362cc8af092bdbc9536ad95
  */
 
@@ -16,7 +16,7 @@ extern "C" {
 #endif
 
 /*
- * Probes (sha3-256 2449658ce3e6af66a297fb8b9def7228c7b6cf9063b415380ce07fd7a7d85570)
+ * Probes (sha3-256 c3abf9f009c6d51ca0656d147b8c6ead4571fbfbfc6e4a31197ac338ca67e031)
  */
 
 /*
@@ -24,7 +24,7 @@ extern "C" {
  * Description:
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
- * Location: modapp/src/main.c:58
+ * Location: modapp/src/main.c:57
  */
 #define PRODUCER (24850365UL)
 
@@ -33,7 +33,7 @@ extern "C" {
  * Description:
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
- * Location: modapp/src/main.c:86
+ * Location: modapp/src/main.c:92
  */
 #define CONSUMER (908247069UL)
 
@@ -42,12 +42,12 @@ extern "C" {
  * Description:
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
- * Location: modapp/src/main.c:36
+ * Location: modapp/src/main.c:35
  */
 #define MAIN (785032641UL)
 
 /*
- * Events (sha3-256 a909bcc92eae3b636e43869b5ddab1118102914f6c14bc7060c865c4cfbceb77)
+ * Events (sha3-256 51c505ccb5cd6479e67c412c17ecdf24f2049e98270edd22a1319dec7099c76f)
  */
 
 /*
@@ -56,7 +56,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
  * Payload type:
- * Location: modapp/src/main.c:67
+ * Location: modapp/src/main.c:72
  */
 #define PRODUCER_STARTED (1UL)
 
@@ -66,7 +66,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
  * Payload type:
- * Location: modapp/src/main.c:95
+ * Location: modapp/src/main.c:101
  */
 #define CONSUMER_STARTED (2UL)
 
@@ -76,7 +76,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
  * Payload type: u32
- * Location: modapp/src/main.c:76
+ * Location: modapp/src/main.c:82
  */
 #define PRODUCER_SENT (3UL)
 
@@ -96,7 +96,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
  * Payload type:
- * Location: modapp/src/main.c:45
+ * Location: modapp/src/main.c:44
  */
 #define STARTUP_BEGIN (5UL)
 
@@ -106,7 +106,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
  * Payload type:
- * Location: modapp/src/main.c:52
+ * Location: modapp/src/main.c:51
  */
 #define STARTUP_DONE (6UL)
 
@@ -116,7 +116,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags:
  * Payload type: u32
- * Location: modapp/src/main.c:102
+ * Location: modapp/src/main.c:108
  */
 #define CONSUMER_RECEIVED (7UL)
 
@@ -126,7 +126,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags: zephyr;syscall;thread
  * Payload type: u32
- * Location: modapp/src/modality_tracing.c:38
+ * Location: modapp/src/modality_tracing.c:34
  */
 #define K_THREAD_CREATE (8UL)
 
@@ -136,7 +136,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags: zephyr;syscall;thread
  * Payload type: u32
- * Location: modapp/src/modality_tracing.c:47
+ * Location: modapp/src/modality_tracing.c:42
  */
 #define K_THREAD_START (9UL)
 
@@ -146,7 +146,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags: zephyr;syscall;thread
  * Payload type: u32
- * Location: modapp/src/modality_tracing.c:58
+ * Location: modapp/src/modality_tracing.c:50
  */
 #define K_THREAD_SLEEP (10UL)
 
@@ -156,7 +156,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags: zephyr;syscall;fifo
  * Payload type: u32
- * Location: modapp/src/modality_tracing.c:67
+ * Location: modapp/src/modality_tracing.c:58
  */
 #define K_FIFO_GET (11UL)
 
@@ -166,7 +166,7 @@ extern "C" {
  * Component ID: 2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f
  * Tags: zephyr;syscall;fifo
  * Payload type: u32
- * Location: modapp/src/modality_tracing.c:76
+ * Location: modapp/src/modality_tracing.c:66
  */
 #define K_FIFO_PUT (12UL)
 

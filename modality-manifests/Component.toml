@@ -1,5 +1,5 @@
 name = "zephyr-example-component"
 id = "2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f"
-code_hash = "9d2b8fddb6ef2466a2a31dc8de0275aec22bad53082c910d5dc0b7ccec3eb797"
+code_hash = "80649425ea1215baac079b9f9693bc7c076b886da84941eea957616c0f229a59"
 instrumentation_hash = "d8b97cf8fa96d08a6da4e7d39f8d3011f640898d6362cc8af092bdbc9536ad95"
 tags = []

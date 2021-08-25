@@ -1,4 +1,4 @@
 component_id,id,name,description,tags,file,line
-2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,24850365,PRODUCER,,,modapp/src/main.c,58
-2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,908247069,CONSUMER,,,modapp/src/main.c,86
-2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,785032641,MAIN,,,modapp/src/main.c,36
+2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,24850365,PRODUCER,,,modapp/src/main.c,57
+2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,908247069,CONSUMER,,,modapp/src/main.c,92
+2f7b0e9f-aa1d-4eda-87b5-6c88b8a7bf1f,785032641,MAIN,,,modapp/src/main.c,35

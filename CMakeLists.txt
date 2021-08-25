@@ -12,7 +12,7 @@ SET(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
 set(MODALITY_PROBE_TARGET_TRIPLE "thumbv7em-none-eabi" CACHE STRING "Target triple")
 find_package(ModalityProbe REQUIRED)
 
-target_sources(app PRIVATE src/main.c src/modality_comms.c src/modality_tracing.c)
+target_sources(app PRIVATE src/main.c src/modality_comms.c src/modality_tracing.c src/generated_mutators/delay_mutator.c)
 target_link_libraries(app PRIVATE ModalityProbe::LibModalityProbe)
 target_link_libraries(app PRIVATE "-Wl,--allow-multiple-definition")
 
@@ -30,11 +30,11 @@ modality_probe_generate_header(
     OUTPUT_FILE "include/generated/modality_component_definitions.h"
     COMPONENT_PATH "modality-manifests")
 
-# modality_probe_generate_mutators(
-#     TARGET app
-#     DEPENDS src/main.c
-#     FILE_EXTENSIONS "c"
-#     COMPONENT_PATH "zephyr-example-component"
-#     OUTPUT_PATH "generated_mutators"
-#     EXCLUDES "build"
-#     SOURCE_PATH ".")
+modality_probe_generate_mutators(
+    TARGET app
+    DEPENDS src/main.c
+    FILE_EXTENSIONS "c"
+    COMPONENT_PATH "modality-manifests"
+    OUTPUT_PATH "src/generated_mutators"
+    EXCLUDES "build"
+    SOURCE_PATH ".")
