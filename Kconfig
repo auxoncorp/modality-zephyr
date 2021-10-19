@@ -1,0 +1,183 @@
+if TRACING_EXTERNAL
+
+menu "Modality Probe Tracing"
+
+config MODALITY_PROBE_TRACING
+    bool "Modality probe tracing support"
+    default y
+    select THREAD_NAME
+    select INIT_STACKS
+    select THREAD_MONITOR
+    help
+      Enable Modality probe tracing support.
+      When enabled, each thread will be allocated a Modality probe (unless excluded via `trace_exclude_thread(thread-name)`).
+
+if MODALITY_PROBE_TRACING
+
+config MODALITY_PROBE_DO_STARTUP_INITIALIZATION
+    bool "Startup initialization"
+    default y
+    help
+      Enable tracing initialization on startup. Initialization runs at the PRE_KERNEL_1 level, with priority of 99.
+      By default the following threads are excluded from tracing:
+        - "idle 00"
+        - "logging"
+        - TRACE_IO_THEAD_NAME (if MODALITY_PROBE_INCLUDE_IO_THREAD is enabled)
+
+config MODALITY_PROBE_USE_PRINTK
+    bool "Output debug messages with printk"
+    default y
+    select PRINTK
+    help
+      The tracing implementation outputs debugging messages by calling the `TRACE_DEBUG_PRINTF()` macro.
+      When enabled, the `TRACE_DEBUG_PRINTF()` macro will call `printk()`.
+
+config MODALITY_PROBE_INCLUDE_USER_LEVEL_PROBE_MACROS
+    bool "User-level Modality probe API macros"
+    default y
+    help
+      When enabled, all of the Modality probe API macros normally defined in `modality/probe.h`
+      will get redefined to use a critical section.
+      This is useful when using the probes at the task lever for application events.
+
+config MODALITY_PROBE_USE_TRACE_ASSERT
+    bool "Enable trace assertions"
+    default y
+    help
+      Enable the internal tracing asserts.
+      It is recommened to have this enabled during development and integration for error checking.
+      When an assert is triggered, `trace_disable()` is called and the error message can be
+      retrieved by calling `trace_get_error()`.
+
+config MODALITY_PROBE_USE_STATIC_ALLOCATION
+    bool "Static allocation mode"
+    default y
+    help
+      When enabled, Modality probe and tracing resources are allocated statically.
+      Otherwise resources are allocated using `TRACE_MALLOC()`, and free'd using `TRACE_FREE()`.
+
+config MODALITY_PROBE_STATIC_STORAGE_SIZE
+	int "Static probe storage memory pool size" if MODALITY_PROBE_USE_STATIC_ALLOCATION
+	depends on MODALITY_PROBE_USE_STATIC_ALLOCATION
+    default 12288
+	help
+      The size, in bytes, of the global probe log storage buffer.
+      Only used when `MODALITY_PROBE_USE_STATIC_ALLOCATION` is enabled.
+
+config MODALITY_PROBE_THREAD_PROBE_SIZE
+	int "Probe log buffer size"
+    default 4096
+	help
+      The size, in bytes, of each probe's log storage buffer.
+      When `MODALITY_PROBE_USE_STATIC_ALLOCATION` is enabled, probe buffers are allocated from
+      a single global byte array, see `MODALITY_PROBE_STATIC_STORAGE_SIZE`.
+
+config MODALITY_PROBE_MAX_PROBES
+	int "Size of the probe registry"
+    default 8
+	help
+      The maximun number of Modality probes available to the system.
+      Unless excluded with `trace_exclude_thread()`, each thread will be allocated a Modality probe.
+
+config MODALITY_PROBE_MAX_EXCLUDED_THREADS
+	int "Size of the excluded thread registry"
+    default 8
+	help
+      The maximun number of entries that can be stored in the task exclude list for thread-level initialization filtering.
+      See `trace_exclude_thread()`.
+
+config MODALITY_PROBE_INCLUDE_IO_THREAD
+    bool "Include IO thread"
+    default y
+    help
+      When enabled, an internal thread will be created to manage the IO for the probes.
+      The IO thread is responsible for getting reports and mutator announcements sent out
+      to a Modality collector (or file for later processing) via `TRACE_IO_WRITE()`, and
+      optionally getting control plane messages in via `TRACE_IO_READ()`.
+      IO transport initialization is optionally provided via `TRACE_IO_INIT()`.
+
+if MODALITY_PROBE_INCLUDE_IO_THREAD
+
+    config MODALITY_PROBE_IO_THREAD_NAME
+    string "IO thread name"
+    default "ModalityProbeIo"
+    help
+      The IO thread name.
+
+    config MODALITY_PROBE_IO_THREAD_STACK_SIZE
+    int "IO thread stack size"
+    range 1 65535
+    default 4096
+    help
+      The stack size, in bytes, of the internal IO thread.
+
+    config MODALITY_PROBE_IO_THREAD_PRIORITY
+    int "IO thread priority"
+    range -32 32
+    default 1
+    help
+      The priority of the internal IO thread.
+
+    config MODALITY_PROBE_IO_THREAD_BUFFER_SIZE
+    int "IO thread data buffer size"
+    range 1 65535
+    default 512
+    help
+      The size, in bytes, of the internal buffer used by the IO thread for
+      reports, mutator announcements, and control plane buffering.
+
+    config MODALITY_PROBE_IO_THREAD_STARTUP_DELAY_MS
+    int "IO thread startup milliseconds delay"
+    range 0 1000000000
+    default 10
+    help
+      The number of milliseconds used to `k_msleep()` in the IO thread before it begins its loop.
+
+    config MODALITY_PROBE_IO_THREAD_DELAY_MS
+    int "IO thread loop milliseconds delay"
+    range 0 1000000000
+    default 10
+    help
+       The number of milliseconds used to `k_msleep()` in the IO thread loop.
+       This effectively defines the IO polling and reporting interval.
+
+    config MODALITY_PROBE_IO_THREAD_ITERS_PER_MUTATOR_ANNOUNCEMENT
+    int "IO thread loop iterations per mutator announcements"
+    range 1 1000000000
+    default 100
+    help
+      The number of iterations in the IO thread before reporting mutator announcements.
+      Mutator announcements only need to be reported once, but doing it occasionally
+      is recommended if the IO transport is lossy.
+
+endif # MODALITY_PROBE_INCLUDE_IO_THREAD
+
+menu "IO Transport Configuration"
+depends on MODALITY_PROBE_INCLUDE_IO_THREAD
+choice MODALITY_PROBE_IO_TRANSPORT
+	prompt "IO transport selection"
+	default MODALITY_PROBE_IO_TRANSPORT_SOCKET
+	help
+      Which IO transport implementation to use.
+
+config MODALITY_PROBE_IO_TRANSPORT_SOCKET
+    bool "Use sockets for IO"
+    select NETWORKING
+    select NET_SOCKETS
+    select NET_IPV4
+    select NET_TCP
+    help
+      Use Zephyr sockets for IO.
+endchoice
+
+if MODALITY_PROBE_IO_TRANSPORT_SOCKET
+rsource "source/io/socket/Kconfig"
+endif # MODALITY_PROBE_IO_TRANSPORT_SOCKET
+
+endmenu # "IO Transport Configuration"
+
+endif # MODALITY_PROBE_TRACING
+
+endmenu # "Modality Probe Tracing"
+
+endif # TRACING_EXTERNAL

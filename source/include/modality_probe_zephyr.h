@@ -1,21 +1,31 @@
-#ifndef MODALITY_ZEPHYR_INCLUDE_TRACING_TRACING_H_
-#define MODALITY_ZEPHYR_INCLUDE_TRACING_TRACING_H_
+#ifndef MODALITY_PROBE_ZEPHYR_H
+#define MODALITY_PROBE_ZEPHYR_H
 
-// prevent the stock one from being included, somehow
-#define ZEPHYR_INCLUDE_TRACING_TRACING_H_
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#include "../modality_tracing.h"
+#include <kernel.h>
 
+#ifdef CONFIG_MODALITY_PROBE_TRACING
+
+void sys_trace_k_thread_create(struct k_thread *new_thread, int prio);
+void sys_trace_k_thread_switched_out(void);
+void sys_trace_k_thread_switched_in(void);
+void sys_trace_k_thread_suspend(struct k_thread *thread);
+
+#undef sys_port_trace_k_thread_create
+#define sys_port_trace_k_thread_create(new_thread) \
+    sys_trace_k_thread_create(new_thread, prio)
 #define sys_port_trace_k_thread_foreach_enter()
 #define sys_port_trace_k_thread_foreach_exit()
 #define sys_port_trace_k_thread_foreach_unlocked_enter()
 #define sys_port_trace_k_thread_foreach_unlocked_exit()
-#define sys_port_trace_k_thread_create(new_thread) modality_zephyr_k_thread_create(new_thread)
 #define sys_port_trace_k_thread_user_mode_enter()
 #define sys_port_trace_k_thread_join_enter(thread, timeout)
 #define sys_port_trace_k_thread_join_blocking(thread, timeout)
 #define sys_port_trace_k_thread_join_exit(thread, timeout, ret)
-#define sys_port_trace_k_thread_sleep_enter(timeout) modality_zephyr_k_thread_sleep(timeout)
+#define sys_port_trace_k_thread_sleep_enter(timeout)
 #define sys_port_trace_k_thread_sleep_exit(timeout, ret)
 #define sys_port_trace_k_thread_msleep_enter(ms)
 #define sys_port_trace_k_thread_msleep_exit(ms, ret)
@@ -25,18 +35,24 @@
 #define sys_port_trace_k_thread_busy_wait_exit(usec_to_wait)
 #define sys_port_trace_k_thread_yield()
 #define sys_port_trace_k_thread_wakeup(thread)
-#define sys_port_trace_k_thread_start(thread) modality_zephyr_k_thread_start(thread)
+#define sys_port_trace_k_thread_start(thread)
 #define sys_port_trace_k_thread_abort(thread)
 #define sys_port_trace_k_thread_priority_set(thread)
-#define sys_port_trace_k_thread_suspend_enter(thread)
+#undef sys_port_trace_k_thread_suspend_enter
+#define sys_port_trace_k_thread_suspend_enter(thread) \
+    sys_trace_k_thread_suspend(thread)
 #define sys_port_trace_k_thread_suspend_exit(thread)
 #define sys_port_trace_k_thread_resume_enter(thread)
 #define sys_port_trace_k_thread_resume_exit(thread)
 #define sys_port_trace_k_thread_sched_lock()
 #define sys_port_trace_k_thread_sched_unlock()
 #define sys_port_trace_k_thread_name_set(thread, ret)
-#define sys_port_trace_k_thread_switched_out()
-#define sys_port_trace_k_thread_switched_in() modality_zephyr_k_thread_switched_in()
+#undef sys_port_trace_k_thread_switched_out
+#define sys_port_trace_k_thread_switched_out() \
+    sys_trace_k_thread_switched_out()
+#undef sys_port_trace_k_thread_switched_in
+#define sys_port_trace_k_thread_switched_in() \
+    sys_trace_k_thread_switched_in()
 #define sys_port_trace_k_thread_ready(thread)
 #define sys_port_trace_k_thread_pend(thread)
 #define sys_port_trace_k_thread_info(thread)
@@ -154,7 +170,7 @@
 #define sys_port_trace_k_fifo_cancel_wait_enter(fifo)
 #define sys_port_trace_k_fifo_cancel_wait_exit(fifo)
 
-#define sys_port_trace_k_fifo_put_enter(fifo, data) modality_zephyr_k_fifo_put(fifo)
+#define sys_port_trace_k_fifo_put_enter(fifo, data)
 
 #define sys_port_trace_k_fifo_put_exit(fifo, data)
 #define sys_port_trace_k_fifo_alloc_put_enter(fifo, data)
@@ -164,7 +180,7 @@
 #define sys_port_trace_k_fifo_alloc_put_slist_enter(fifo, list)
 #define sys_port_trace_k_fifo_alloc_put_slist_exit(fifo, list)
 
-#define sys_port_trace_k_fifo_get_enter(fifo, timeout) modality_zephyr_k_fifo_get(fifo)
+#define sys_port_trace_k_fifo_get_enter(fifo, timeout)
 
 #define sys_port_trace_k_fifo_get_exit(fifo, timeout, ret)
 #define sys_port_trace_k_fifo_peek_head_enter(fifo)
@@ -267,4 +283,10 @@
 #define sys_port_trace_pm_device_disable_enter(dev)
 #define sys_port_trace_pm_device_disable_exit(dev)
 
+#endif /* CONFIG_MODALITY_PROBE_TRACING */
+
+#ifdef __cplusplus
+} /* extern "C" */
 #endif
+
+#endif /* MODALITY_PROBE_ZEPHYR_H */

@@ -1,0 +1,4 @@
+name: ExternalTracing
+build:
+  cmake: .
+  kconfig: Kconfig
