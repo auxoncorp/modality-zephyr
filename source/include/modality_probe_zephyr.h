@@ -10,6 +10,9 @@ extern "C" {
 #ifdef CONFIG_MODALITY_PROBE_TRACING
 
 void sys_trace_k_thread_create(struct k_thread *new_thread, int prio);
+void sys_trace_k_thread_sleep_enter(k_timeout_t timeout);
+void sys_trace_k_thread_msleep_enter(int32_t ms);
+void sys_trace_k_thread_usleep_enter(int32_t us);
 void sys_trace_k_thread_switched_out(void);
 void sys_trace_k_thread_switched_in(void);
 void sys_trace_k_thread_suspend(struct k_thread *thread);
@@ -25,11 +28,17 @@ void sys_trace_k_thread_suspend(struct k_thread *thread);
 #define sys_port_trace_k_thread_join_enter(thread, timeout)
 #define sys_port_trace_k_thread_join_blocking(thread, timeout)
 #define sys_port_trace_k_thread_join_exit(thread, timeout, ret)
-#define sys_port_trace_k_thread_sleep_enter(timeout)
+#undef sys_port_trace_k_thread_sleep_enter
+#define sys_port_trace_k_thread_sleep_enter(timeout) \
+    sys_trace_k_thread_sleep_enter(timeout)
 #define sys_port_trace_k_thread_sleep_exit(timeout, ret)
-#define sys_port_trace_k_thread_msleep_enter(ms)
+#undef sys_port_trace_k_thread_msleep_enter
+#define sys_port_trace_k_thread_msleep_enter(ms) \
+    sys_trace_k_thread_msleep_enter(ms)
 #define sys_port_trace_k_thread_msleep_exit(ms, ret)
-#define sys_port_trace_k_thread_usleep_enter(us)
+#undef sys_port_trace_k_thread_usleep_enter
+#define sys_port_trace_k_thread_usleep_enter(us) \
+    sys_trace_k_thread_usleep_enter(us)
 #define sys_port_trace_k_thread_usleep_exit(us, ret)
 #define sys_port_trace_k_thread_busy_wait_enter(usec_to_wait)
 #define sys_port_trace_k_thread_busy_wait_exit(usec_to_wait)

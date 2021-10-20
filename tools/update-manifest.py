@@ -27,6 +27,8 @@ EVENTS_WITHOUT_PAYLOADS = [
 # Most of the events with payloads are u32, this is a list of of events that have signed payloads
 EVENTS_WITH_SIGNED_PAYLOADS = [
     'TRACE_EVENT_TASK_SWITCHED_IN',
+    'TRACE_EVENT_TASK_MSLEEP',
+    'TRACE_EVENT_TASK_USLEEP',
 ]
 
 def remove_prefix(text, prefix):

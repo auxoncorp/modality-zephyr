@@ -759,12 +759,30 @@ void sys_trace_k_thread_switched_in(void)
     }
 }
 
+#define REC_WU32_IF(event, payload) \
+    if(trace_thread_is_registered(NULL)) \
+    { \
+        trace_log_event_with_payload(event, (payload)); \
+    }
+
 void sys_trace_k_thread_suspend(struct k_thread *thread)
 {
-    if(trace_thread_is_registered(NULL))
-    {
-        trace_log_event_with_payload(TRACE_EVENT_TASK_SUSPEND, (uint32_t) thread);
-    }
+    REC_WU32_IF(TRACE_EVENT_TASK_SUSPEND, (uint32_t) thread)
+}
+
+void sys_trace_k_thread_sleep_enter(k_timeout_t timeout)
+{
+    REC_WU32_IF(TRACE_EVENT_TASK_SLEEP, (uint32_t) timeout.ticks)
+}
+
+void sys_trace_k_thread_msleep_enter(int32_t ms)
+{
+    REC_WU32_IF(TRACE_EVENT_TASK_MSLEEP, (uint32_t) ms)
+}
+
+void sys_trace_k_thread_usleep_enter(int32_t us)
+{
+    REC_WU32_IF(TRACE_EVENT_TASK_USLEEP, (uint32_t) us)
 }
 
 #endif /* CONFIG_MODALITY_PROBE_TRACING */
