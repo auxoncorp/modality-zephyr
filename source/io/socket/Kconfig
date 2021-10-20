@@ -1,0 +1,27 @@
+if MODALITY_PROBE_TRACING
+
+config MODALITY_PROBE_IO_TRANSPORT_SOCKET_COLLECTOR_PORT
+    int "Collector UDP port number"
+    default 2718
+    help
+      The Modality collector UDP port.
+      It will receive probe reports and mutator announcements via the `TRACE_IO_WRITE()` calls.
+      This is configured in your SUT's Modality.toml file.
+
+config MODALITY_PROBE_IO_TRANSPORT_SOCKET_COLLECTOR_ADDRESS
+    string "Collector IP address"
+    default "192.0.2.2"
+    help
+      The Modality collector IP address.
+      It will receive probe reports and mutator announcements via the `TRACE_IO_WRITE()` calls.
+      This is configured in your SUT's Modality.toml file.
+
+config MODALITY_PROBE_IO_TRANSPORT_SOCKET_CONTROL_PLANE_PORT
+    int "Control plane UDP port number"
+    default 34355
+    help
+      The port number to listen on for Modality control plane messages,
+      read via `TRACE_IO_READ()` calls.
+      This is configured in your SUT's Modality.toml file.
+
+endif # MODALITY_PROBE_TRACING

@@ -1,2 +1,9 @@
 /build/
 /.cache/
+
+/example-workspace/modality-example/build/
+/example-workspace/.west/
+/example-workspace/bootloader/
+/example-workspace/modules/
+/example-workspace/tools/
+/example-workspace/zephyr/

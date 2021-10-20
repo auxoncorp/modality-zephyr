@@ -1,0 +1,13 @@
+manifest:
+  self:
+    path: modality-example
+
+  remotes:
+    - name: zephyrproject-rtos
+      url-base: https://github.com/auxoncorp
+
+  projects:
+    - name: zephyr
+      remote: zephyrproject-rtos
+      revision: add-external-tracing-support-v2.6.0
+      import: true
