@@ -18,11 +18,23 @@ config MODALITY_PROBE_DO_STARTUP_INITIALIZATION
     bool "Startup initialization"
     default y
     help
-      Enable tracing initialization on startup. Initialization runs at the PRE_KERNEL_1 level, with priority of 99.
+      Enable tracing initialization on startup. Initialization runs at the PRE_KERNEL_1 level, with priority of 0.
       By default the following threads are excluded from tracing:
         - "idle 00"
         - "logging"
+        - "thread_analyzer"
+        - "net_mgmt"
+        - "tcp_work"
+        - "sysworkq"
+        - "main" (if MODALITY_PROBE_EXCLUDE_MAIN_THREAD is not enabled)
         - TRACE_IO_THEAD_NAME (if MODALITY_PROBE_INCLUDE_IO_THREAD is enabled)
+
+config MODALITY_PROBE_EXCLUDE_MAIN_THREAD
+    bool "Exlude the main thread from tracing" if MODALITY_PROBE_DO_STARTUP_INITIALIZATION
+    default y
+    help
+      Exclude the main thread from tracing.
+      Only used if `MODALITY_PROBE_DO_STARTUP_INITIALIZATION` is enabled.
 
 config MODALITY_PROBE_USE_PRINTK
     bool "Output debug messages with printk"
@@ -32,13 +44,14 @@ config MODALITY_PROBE_USE_PRINTK
       The tracing implementation outputs debugging messages by calling the `TRACE_DEBUG_PRINTF()` macro.
       When enabled, the `TRACE_DEBUG_PRINTF()` macro will call `printk()`.
 
-config MODALITY_PROBE_INCLUDE_USER_LEVEL_PROBE_MACROS
-    bool "User-level Modality probe API macros"
+config MODALITY_PROBE_INCLUDE_CRITICAL_SECTION_WRAPPED_API_MACROS
+    bool "Include critical-section-wrapped Modality probe API macros"
     default y
     help
       When enabled, all of the Modality probe API macros normally defined in `modality/probe.h`
       will get redefined to use a critical section.
-      This is useful when using the probes at the task lever for application events.
+      This is useful when using the probes at the thread level for application events where the
+      threads are preemptible.
 
 config MODALITY_PROBE_USE_TRACE_ASSERT
     bool "Enable trace assertions"
@@ -59,14 +72,15 @@ config MODALITY_PROBE_USE_STATIC_ALLOCATION
 config MODALITY_PROBE_STATIC_STORAGE_SIZE
 	int "Static probe storage memory pool size" if MODALITY_PROBE_USE_STATIC_ALLOCATION
 	depends on MODALITY_PROBE_USE_STATIC_ALLOCATION
-    default 12288
+    range 64 65535
+    default 2048
 	help
       The size, in bytes, of the global probe log storage buffer.
       Only used when `MODALITY_PROBE_USE_STATIC_ALLOCATION` is enabled.
 
 config MODALITY_PROBE_THREAD_PROBE_SIZE
 	int "Probe log buffer size"
-    default 4096
+    default 1024
 	help
       The size, in bytes, of each probe's log storage buffer.
       When `MODALITY_PROBE_USE_STATIC_ALLOCATION` is enabled, probe buffers are allocated from
@@ -74,14 +88,14 @@ config MODALITY_PROBE_THREAD_PROBE_SIZE
 
 config MODALITY_PROBE_MAX_PROBES
 	int "Size of the probe registry"
-    default 8
+    default 2
 	help
       The maximun number of Modality probes available to the system.
       Unless excluded with `trace_exclude_thread()`, each thread will be allocated a Modality probe.
 
 config MODALITY_PROBE_MAX_EXCLUDED_THREADS
 	int "Size of the excluded thread registry"
-    default 8
+    default 16
 	help
       The maximun number of entries that can be stored in the task exclude list for thread-level initialization filtering.
       See `trace_exclude_thread()`.
@@ -106,21 +120,21 @@ if MODALITY_PROBE_INCLUDE_IO_THREAD
 
     config MODALITY_PROBE_IO_THREAD_STACK_SIZE
     int "IO thread stack size"
-    range 1 65535
-    default 4096
+    range 512 65535
+    default 2048
     help
       The stack size, in bytes, of the internal IO thread.
 
     config MODALITY_PROBE_IO_THREAD_PRIORITY
     int "IO thread priority"
     range -32 32
-    default 1
+    default -16
     help
       The priority of the internal IO thread.
 
     config MODALITY_PROBE_IO_THREAD_BUFFER_SIZE
     int "IO thread data buffer size"
-    range 1 65535
+    range 64 65535
     default 512
     help
       The size, in bytes, of the internal buffer used by the IO thread for
@@ -129,14 +143,14 @@ if MODALITY_PROBE_INCLUDE_IO_THREAD
     config MODALITY_PROBE_IO_THREAD_STARTUP_DELAY_MS
     int "IO thread startup milliseconds delay"
     range 0 1000000000
-    default 10
+    default 20
     help
       The number of milliseconds used to `k_msleep()` in the IO thread before it begins its loop.
 
     config MODALITY_PROBE_IO_THREAD_DELAY_MS
     int "IO thread loop milliseconds delay"
     range 0 1000000000
-    default 10
+    default 50
     help
        The number of milliseconds used to `k_msleep()` in the IO thread loop.
        This effectively defines the IO polling and reporting interval.
@@ -144,7 +158,7 @@ if MODALITY_PROBE_INCLUDE_IO_THREAD
     config MODALITY_PROBE_IO_THREAD_ITERS_PER_MUTATOR_ANNOUNCEMENT
     int "IO thread loop iterations per mutator announcements"
     range 1 1000000000
-    default 100
+    default 20
     help
       The number of iterations in the IO thread before reporting mutator announcements.
       Mutator announcements only need to be reported once, but doing it occasionally

@@ -60,15 +60,17 @@ void trace_enable(void)
     }
 
     TRACE_ENTER_CRITICAL_SECTION();
-
     g_is_enabled = 1;
-
     TRACE_EXIT_CRITICAL_SECTION();
 }
 
 void trace_disable(void)
 {
+    TRACE_ALLOC_CRITICAL_SECTION();
+
+    TRACE_ENTER_CRITICAL_SECTION();
     g_is_enabled = 0;
+    TRACE_EXIT_CRITICAL_SECTION();
 }
 
 int trace_is_enabled(void)
@@ -452,6 +454,13 @@ static int trace_pre_kernel_init(const struct device *dev)
     trace_enable();
     trace_exclude_thread("idle 00");
     trace_exclude_thread("logging");
+    trace_exclude_thread("thread_analyzer");
+    trace_exclude_thread("net_mgmt");
+    trace_exclude_thread("tcp_work");
+    trace_exclude_thread("sysworkq");
+#ifdef CONFIG_MODALITY_PROBE_EXCLUDE_MAIN_THREAD
+    trace_exclude_thread("main");
+#endif
 #ifdef CONFIG_MODALITY_PROBE_INCLUDE_IO_THREAD
     trace_exclude_thread(TRACE_IO_THREAD_NAME);
 #endif
@@ -459,7 +468,7 @@ static int trace_pre_kernel_init(const struct device *dev)
     return 0;
 }
 
-SYS_INIT(trace_pre_kernel_init, PRE_KERNEL_1, 99);
+SYS_INIT(trace_pre_kernel_init, PRE_KERNEL_1, 0);
 #endif /* CONFIG_MODALITY_PROBE_DO_STARTUP_INITIALIZATION */
 
 #ifdef CONFIG_MODALITY_PROBE_INCLUDE_IO_THREAD
@@ -484,7 +493,7 @@ static int trace_post_kernel_init(const struct device *dev)
     return 0;
 }
 
-SYS_INIT(trace_post_kernel_init, POST_KERNEL, 99);
+SYS_INIT(trace_post_kernel_init, POST_KERNEL, 0);
 
 static void io_thread_entry(void *p1, void *p2, void *p3)
 {
@@ -497,7 +506,9 @@ static void io_thread_entry(void *p1, void *p2, void *p3)
     uint32_t target_probe_id;
     uint16_t iters = 0;
 
+#if (MODALITY_PROBE_IO_THREAD_STARTUP_DELAY_MS != 0)
     k_msleep(CONFIG_MODALITY_PROBE_IO_THREAD_STARTUP_DELAY_MS);
+#endif
 
     TRACE_IO_INIT();
 
@@ -607,7 +618,7 @@ static void io_thread_probe_mutator_announcement_iter_fn(modality_probe* probe)
 #endif /* CONFIG_MODALITY_PROBE_INCLUDE_IO_THREAD */
 
 /* Modality probe API wrappers */
-#ifdef CONFIG_MODALITY_PROBE_INCLUDE_USER_LEVEL_PROBE_MACROS
+#ifdef CONFIG_MODALITY_PROBE_INCLUDE_CRITICAL_SECTION_WRAPPED_API_MACROS
 
 #define MPT_WP_API_WRAPPER(fn_suffix, type) \
     size_t MPT_CAT2(mpt_, fn_suffix)(modality_probe *probe, uint32_t event_id, type payload) \
@@ -716,7 +727,7 @@ size_t mpt_merge_snapshot_bytes(
     return err;
 }
 
-#endif /* CONFIG_MODALITY_PROBE_INCLUDE_USER_LEVEL_PROBE_MACROS */
+#endif /* CONFIG_MODALITY_PROBE_INCLUDE_CRITICAL_SECTION_WRAPPED_API_MACROS */
 
 /* Tracing hooks */
 void sys_trace_k_thread_create(struct k_thread *new_thread, int prio)

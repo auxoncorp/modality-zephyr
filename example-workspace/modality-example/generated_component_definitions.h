@@ -4,8 +4,8 @@
  * Component:
  *   Name: modality-component
  *   ID: 923c69c3-95c4-48cc-b62b-982924de6665
- *   Code hash: 900c5afb2e84e79b66cca365b3e5d2cb7c302697167eccc8590996ffa21772e8
- *   Instrumentation hash: f71ac80bf0c6f01e41c07063a168c43bdcc816d087a9c055e179a29f48dda1b9
+ *   Code hash: 0247b5f4b3e6b33778b0acb0e9f033db2475e993508e727f8bc676a4843d7534
+ *   Instrumentation hash: 04908eca4727f1dafcdde1e2fc84ef2b39e62012e65cd862ec2416c24788e79a
  */
 
 #ifndef MODALITY_PROBE_GENERATED_IDENTIFIERS_H
@@ -16,17 +16,8 @@ extern "C" {
 #endif
 
 /*
- * Probes (sha3-256 1b2cf0a7e645c2e06b8bef8514ebf269924190bfbad370ca2224a2b1ba38e4bc)
+ * Probes (sha3-256 d6b24cd87df09becbe7a5939065e7dd3b93136fd90f273521ba12b7f6fcdd65d)
  */
-
-/*
- * Name: MAIN
- * Description: Zephyr task 'main'
- * Component ID: 923c69c3-95c4-48cc-b62b-982924de6665
- * Tags: Zephyr;task
- * Location: :
- */
-#define MAIN (29717UL)
 
 /*
  * Name: CONSUMER_THREAD

@@ -2,7 +2,7 @@ if MODALITY_PROBE_TRACING
 
 config MODALITY_PROBE_IO_TRANSPORT_SOCKET_COLLECTOR_PORT
     int "Collector UDP port number"
-    default 34333
+    default 2718
     help
       The Modality collector UDP port.
       It will receive probe reports and mutator announcements via the `TRACE_IO_WRITE()` calls.

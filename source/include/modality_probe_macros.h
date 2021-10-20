@@ -7,7 +7,7 @@ extern "C" {
 
 #ifdef CONFIG_MODALITY_PROBE_TRACING
 
-#ifdef CONFIG_MODALITY_PROBE_INCLUDE_USER_LEVEL_PROBE_MACROS
+#ifdef CONFIG_MODALITY_PROBE_INCLUDE_CRITICAL_SECTION_WRAPPED_API_MACROS
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -114,7 +114,7 @@ size_t mpt_merge_snapshot_bytes(modality_probe *probe, const uint8_t *src, size_
 #define MODALITY_PROBE_MERGE_SNAPSHOT_BYTES(probe, src, src_size) \
     ((MODALITY_PROBE_MACROS_ENABLED) ? mpt_merge_snapshot_bytes(probe, src, src_size) : MODALITY_PROBE_ERROR_OK)
 
-#endif /* CONFIG_MODALITY_PROBE_INCLUDE_USER_LEVEL_PROBE_MACROS */
+#endif /* CONFIG_MODALITY_PROBE_INCLUDE_CRITICAL_SECTION_WRAPPED_API_MACROS */
 
 #else /* CONFIG_MODALITY_PROBE_TRACING == 0 */
 

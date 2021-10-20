@@ -12,9 +12,15 @@ extern "C" {
 #define TRACE_DEBUG_PRINTF(...) printk(__VA_ARGS__)
 #endif
 
+#ifndef TRACE_ALLOC_CRITICAL_SECTION
 #define TRACE_ALLOC_CRITICAL_SECTION() int __irq_state;
+#endif
+#ifndef TRACE_ENTER_CRITICAL_SECTION
 #define TRACE_ENTER_CRITICAL_SECTION() { __irq_state = irq_lock(); }
+#endif
+#ifndef TRACE_EXIT_CRITICAL_SECTION
 #define TRACE_EXIT_CRITICAL_SECTION() { irq_unlock(__irq_state); }
+#endif
 
 #ifndef TRACE_MALLOC
 #define TRACE_MALLOC(size) k_malloc(size)

@@ -36,8 +36,8 @@ void main(void)
 
     while(1)
     {
-        printk("Main loop\n");
         k_msleep(1000);
+        printk("Main loop\n");
     }
 }
 

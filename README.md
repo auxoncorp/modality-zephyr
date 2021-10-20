@@ -12,14 +12,16 @@ In the meantime, our fork is available [here](https://github.com/auxoncorp/zephy
   ```cmake
   list(APPEND ZEPHYR_EXTRA_MODULES /path/to/modality-zephyr)
   ```
-3. Tell CMake where to find Modality and what target tripple your building for (Cortex-M3 in this example)
+3. Tell CMake where to find Modality and what target triple your building for (Cortex-M3 in this example).
+   This step is only necessary when using the tarball package. If you're using the debian package it
+   will be found automatically and your target triple will be inferred (when possible).
   ```cmake
   set(
       MODALITY_PROBE_ROOT
       "/usr/local/modality"
       CACHE
       PATH
-      "Modality tar package installation directory")
+      "Modality tarball package installation directory")
 
   set(
       MODALITY_PROBE_TARGET_TRIPLE
@@ -102,5 +104,5 @@ Probe IDs are generated from a hash of their associated thread name.
 ```bash
 ./tools/update-manifest.py \
     --component modality-component \
-    --task-names "main" "consumer_thread" "producer_thread"
+    --task-names "consumer_thread" "producer_thread"
 ```
