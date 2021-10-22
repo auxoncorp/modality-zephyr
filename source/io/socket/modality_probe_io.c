@@ -1,11 +1,19 @@
-#include <zephyr.h>
+#include <kernel.h>
 #include <stdint.h>
 #include <assert.h>
 #include <net/socket.h>
+#include <net/net_ip.h>
 #include <fcntl.h>
 #include <errno.h>
 
 #include "modality_probe_io.h"
+
+#ifdef CONFIG_MODALITY_PROBE_IO_TRANSPORT_SOCKET_USE_PRINTK
+#include <sys/printk.h>
+#define TRACE_IO_DEBUG_PRINTF(...) printk(__VA_ARGS__)
+#else
+#define TRACE_IO_DEBUG_PRINTF(...) do {} while( 0 )
+#endif
 
 static int g_sender_socket = -1;
 static struct sockaddr_in g_sender_addr = {0};
@@ -26,6 +34,11 @@ static void init_sender(void)
                 AF_INET,
                 CONFIG_MODALITY_PROBE_IO_TRANSPORT_SOCKET_COLLECTOR_ADDRESS,
                 &g_sender_addr.sin_addr);
+
+        TRACE_IO_DEBUG_PRINTF(
+                "trace-io: Initialized sender socket %s:%d\n",
+                CONFIG_MODALITY_PROBE_IO_TRANSPORT_SOCKET_COLLECTOR_ADDRESS,
+                (int) CONFIG_MODALITY_PROBE_IO_TRANSPORT_SOCKET_COLLECTOR_PORT);
     }
 }
 
@@ -51,6 +64,10 @@ static void init_recvr(void)
 
         err = zsock_bind(g_recvr_socket, (struct sockaddr *) &g_recvr_addr, sizeof(g_recvr_addr));
         assert(err == 0);
+
+        TRACE_IO_DEBUG_PRINTF(
+                "trace-io: Initialized recv socket %d\n",
+                (int) CONFIG_MODALITY_PROBE_IO_TRANSPORT_SOCKET_CONTROL_PLANE_PORT);
     }
 }
 
@@ -81,6 +98,7 @@ int32_t trace_io_read(void* data, uint32_t size, int32_t* bytes_read)
         }
         else
         {
+            TRACE_IO_DEBUG_PRINTF("trace-io: recvd %d bytes\n", (int) status);
             *bytes_read = (int32_t) status;
             ret = 0;
         }
@@ -108,6 +126,7 @@ int32_t trace_io_write(void* data, uint32_t size, int32_t* bytes_written)
         }
         else
         {
+            TRACE_IO_DEBUG_PRINTF("trace-io: sent %d bytes\n", (int) status);
             *bytes_written = (int32_t) status;
             ret = 0;
         }

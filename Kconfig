@@ -128,7 +128,7 @@ if MODALITY_PROBE_INCLUDE_IO_THREAD
     config MODALITY_PROBE_IO_THREAD_PRIORITY
     int "IO thread priority"
     range -32 32
-    default -16
+    default 8
     help
       The priority of the internal IO thread.
 

@@ -24,4 +24,11 @@ config MODALITY_PROBE_IO_TRANSPORT_SOCKET_CONTROL_PLANE_PORT
       read via `TRACE_IO_READ()` calls.
       This is configured in your SUT's Modality.toml file.
 
+config MODALITY_PROBE_IO_TRANSPORT_SOCKET_USE_PRINTK
+    bool "Output debug messages with printk"
+    select PRINTK
+    help
+      The tracing implementation outputs debugging messages by calling the `TRACE_IO_DEBUG_PRINTF()` macro.
+      When enabled, the `TRACE_IO_DEBUG_PRINTF()` macro will call `printk()`.
+
 endif # MODALITY_PROBE_TRACING

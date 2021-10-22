@@ -506,6 +506,8 @@ static void io_thread_entry(void *p1, void *p2, void *p3)
     uint32_t target_probe_id;
     uint16_t iters = 0;
 
+    TRACE_DEBUG_PRINTF("Tracing IO thread started\n");
+
 #if (MODALITY_PROBE_IO_THREAD_STARTUP_DELAY_MS != 0)
     k_msleep(CONFIG_MODALITY_PROBE_IO_THREAD_STARTUP_DELAY_MS);
 #endif
@@ -576,7 +578,7 @@ static void io_thread_probe_report_iter_fn(modality_probe* probe)
 
         if(num_bytes != (int32_t) report_size_bytes)
         {
-            TRACE_DEBUG_PRINTF(("TRACE_IO_WRITE sent partial report buffer\n"));
+            TRACE_DEBUG_PRINTF("TRACE_IO_WRITE sent partial report buffer\n");
         }
     }
 }
@@ -611,7 +613,7 @@ static void io_thread_probe_mutator_announcement_iter_fn(modality_probe* probe)
 
         if(num_bytes != (int32_t) anncmnt_size_bytes)
         {
-            TRACE_DEBUG_PRINTF(("TRACE_IO_WRITE sent partial mutator announcement buffer\n"));
+            TRACE_DEBUG_PRINTF("TRACE_IO_WRITE sent partial mutator announcement buffer\n");
         }
     }
 }
