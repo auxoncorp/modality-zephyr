@@ -22,7 +22,7 @@ static void init_sender(void)
 
         g_sender_addr.sin_family = AF_INET;
         g_sender_addr.sin_port = htons(CONFIG_MODALITY_PROBE_IO_TRANSPORT_SOCKET_COLLECTOR_PORT);
-        inet_pton(
+        zsock_inet_pton(
                 AF_INET,
                 CONFIG_MODALITY_PROBE_IO_TRANSPORT_SOCKET_COLLECTOR_ADDRESS,
                 &g_sender_addr.sin_addr);
@@ -43,10 +43,10 @@ static void init_recvr(void)
         g_recvr_addr.sin_port = htons(CONFIG_MODALITY_PROBE_IO_TRANSPORT_SOCKET_CONTROL_PLANE_PORT);
         g_recvr_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-        fl = fcntl(g_recvr_socket, F_GETFL, 0);
+        fl = zsock_fcntl(g_recvr_socket, F_GETFL, 0);
         assert(fl != -1);
         fl |= O_NONBLOCK;
-        err = fcntl(g_recvr_socket, F_SETFL, fl);
+        err = zsock_fcntl(g_recvr_socket, F_SETFL, fl);
         assert(err != -1);
 
         err = zsock_bind(g_recvr_socket, (struct sockaddr *) &g_recvr_addr, sizeof(g_recvr_addr));

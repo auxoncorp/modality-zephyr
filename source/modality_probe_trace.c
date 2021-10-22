@@ -468,7 +468,7 @@ static int trace_pre_kernel_init(const struct device *dev)
     return 0;
 }
 
-SYS_INIT(trace_pre_kernel_init, PRE_KERNEL_1, 0);
+SYS_INIT(trace_pre_kernel_init, PRE_KERNEL_2, 99);
 #endif /* CONFIG_MODALITY_PROBE_DO_STARTUP_INITIALIZATION */
 
 #ifdef CONFIG_MODALITY_PROBE_INCLUDE_IO_THREAD
