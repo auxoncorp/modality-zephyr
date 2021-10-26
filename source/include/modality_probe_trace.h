@@ -61,6 +61,16 @@ extern const char TRACE_IO_THREAD_NAME[];
 #error "TRACE_IO_WRITE not defined, it is required to be defined in modality_probe_io.h when using the IO thread"
 #endif
 
+#ifdef CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE
+/* Allocate internal control plane message queue for this thread's probe (if the thread is being traced) */
+void trace_alloc_control_plane_message_queue(void);
+/* Returns 0 if the queue is empty, 1 if queue still has messages to process */
+int trace_process_control_plane_message(void);
+#else /* CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE == 0 */
+#define trace_alloc_control_plane_message_queue() MPT_NOOP_STATEMENT
+#define trace_process_control_plane_message() (0)
+#endif /* CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE */
+
 #endif /* CONFIG_MODALITY_PROBE_INCLUDE_IO_THREAD */
 
 void trace_enable(void);
@@ -114,6 +124,8 @@ int trace_switched_thread(void);
 #define trace_exclude_thread(x) MPT_NOOP_STATEMENT
 #define trace_get_thread_probe() (NULL)
 #define trace_probe_iterator(x) MPT_NOOP_STATEMENT
+#define trace_alloc_control_plane_message_queue() MPT_NOOP_STATEMENT
+#define trace_process_control_plane_message() (0)
 
 #define TRACE_GET_CURRENT_TASK() (NULL)
 

@@ -47,11 +47,16 @@ static void producer_run(void)
     uint32_t val = 0;
     printk("Producer started\n");
 
+    // This thread opts in to handling control plane messages for mutations/etc
+    trace_alloc_control_plane_message_queue();
+
     modality_probe* probe = trace_get_thread_probe();
     assert(probe != NULL);
 
     while(1)
     {
+        trace_process_control_plane_message();
+
         printk("Producing %" PRIu32 "\n", val);
 
         err = MODALITY_PROBE_RECORD_W_U32(

@@ -4,5 +4,5 @@ collector_connections = [
 ]
 
 control_connections = [
-  "udp://192.0.2.1:34555"
+  "udp://192.0.2.1:34355"
 ]

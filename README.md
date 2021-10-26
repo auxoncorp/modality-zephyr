@@ -64,16 +64,17 @@ In the meantime, our fork is available [here](https://github.com/auxoncorp/zephy
   west build -t run
   ```
   ```text
-  Initializing tracing
+  trace: Initializing tracing
   *** Booting Zephyr OS build zephyr-v2.6.0-1-ge6858b1f2010  ***
-  Registering probe ID 63422 for task 'consumer_thread'
-  Registering probe ID 45765 for task 'producer_thread'
+  trace: Registering probe ID 63422 for thread 'consumer_thread'
+  trace: Registering probe ID 45765 for thread 'producer_thread'
   Modality Zephyr Example
   Producer started
+  trace: Allocated control plane message queue for thread 'producer_thread'
   Producing 0
   Consumer started
   Consuming 0
-  Main loop
+  trace: Tracing IO thread started
   Producing 1
   Consuming 1
   Main loop
@@ -87,6 +88,12 @@ In the meantime, our fork is available [here](https://github.com/auxoncorp/zephy
   Producing 5
   Consuming 5
   Main loop
+  Producing 6
+  Consuming 6
+  trace: Sent control message to thread 'producer_thread'
+  trace: Thread producer_thread processed a control message
+  Producing 7
+  Consuming 7
   ```
 6. View the trace log
   ```bash
@@ -117,13 +124,13 @@ In the meantime, our fork is available [here](https://github.com/auxoncorp/zephy
   ║  ║  ║
   ║  *  ║  (45765:3:1:3, THREAD_SWITCHED_IN @ PRODUCER_THREAD, payload=-1)
   ║  ║  ║
-  ║  *  ║  (45765:3:1:4, PRODUCING @ PRODUCER_THREAD, payload=1)
+  ╚═»╗  ║  modalityd interacted with PRODUCER_THREAD
   ║  ║  ║
-  ║  *  ║  (45765:3:1:5, THREAD_SLEEP @ PRODUCER_THREAD, payload=50)
+  ║  *  ║  (45765:4:1:5, PRODUCING @ PRODUCER_THREAD, payload=1)
   ║  ║  ║
-  ║  *  ║  (45765:3:1:6, THREAD_SWITCHED_OUT @ PRODUCER_THREAD)
+  ║  *  ║  (45765:4:1:6, THREAD_SLEEP @ PRODUCER_THREAD, payload=50)
   ║  ║  ║
-  ║  ╚═»╗  PRODUCER_THREAD interacted with CONSUMER_THREAD
+  ║  *  ║  (45765:4:1:7, THREAD_SWITCHED_OUT @ PRODUCER_THREAD)
   .  .  .
   .  .  .
   .  .  .

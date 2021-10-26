@@ -11,12 +11,25 @@
 #include <string.h>
 #include <modality/probe.h>
 
+#ifdef CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE
+typedef struct
+{
+    size_t __reserved;
+    atomic_t refcount;
+    uint8_t data[CONFIG_MODALITY_PROBE_IO_THREAD_BUFFER_SIZE];
+} __attribute__((aligned(4))) control_msg_s;
+#endif /* CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE */
+
 typedef struct
 {
     void* tcb; /* k_tid_t */
     uint32_t probe_id;
     modality_probe* probe;
     modality_probe_causal_snapshot snapshot;
+#ifdef CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE
+    struct k_msgq control_msg_q;
+    char __aligned(4) control_msg_buffer[sizeof(control_msg_s*) * CONFIG_MODALITY_PROBE_CONTROL_PLANE_MESSAGE_QUEUE_SIZE];
+#endif /* CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE */
 } tcb_probe_s;
 
 static volatile uint32_t g_is_enabled = 0;
@@ -39,6 +52,9 @@ static uint8_t g_io_buffer[CONFIG_MODALITY_PROBE_IO_THREAD_BUFFER_SIZE] = { 0 };
 static void io_thread_entry(void *p1, void *p2, void *p3);
 static void io_thread_probe_report_iter_fn(modality_probe* probe);
 static void io_thread_probe_mutator_announcement_iter_fn(modality_probe* probe);
+#ifdef CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE
+static void io_thread_distribute_control_messages(uint32_t target_probe_id, size_t num_bytes);
+#endif /* CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE */
 #endif /* CONFIG_MODALITY_PROBE_INCLUDE_IO_THREAD */
 
 /* Internal functions */
@@ -48,6 +64,12 @@ static void add_tcb_probe(k_tid_t thread, uint32_t probe_id, modality_probe* pro
 static tcb_probe_s* get_tcb_probe(k_tid_t thread);
 static int is_task_excluded(uint16_t probe_id);
 static uint16_t probe_id_hash(const char* task_name, uint8_t length);
+#ifdef CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE
+static control_msg_s* alloc_control_msg(void);
+static void ref_control_msg(control_msg_s* msg);
+static void unref_control_msg(control_msg_s* msg);
+#endif /* CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE */
+
 
 void trace_enable(void)
 {
@@ -106,7 +128,7 @@ void trace_exclude_thread(const char* name)
 
     if(slot_was_found == 0)
     {
-        trace_error("No more excluded task slots available, increase CONFIG_MODALITY_PROBE_MAX_EXCLUDED_THREADS");
+        trace_error("No more excluded thread slots available, increase CONFIG_MODALITY_PROBE_MAX_EXCLUDED_THREADS");
     }
 
     TRACE_EXIT_CRITICAL_SECTION();
@@ -144,6 +166,85 @@ void trace_probe_iterator(trace_probe_iterator_function_t iterator_function)
     }
 }
 
+#ifdef CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE
+void trace_alloc_control_plane_message_queue(void)
+{
+    tcb_probe_s* tcb_probe = NULL;
+    k_tid_t thread = k_current_get();
+    TRACE_ALLOC_CRITICAL_SECTION();
+
+    if(thread != NULL)
+    {
+        TRACE_ENTER_CRITICAL_SECTION();
+
+        tcb_probe = get_tcb_probe(thread);
+        if(tcb_probe != NULL)
+        {
+            k_msgq_init(
+                    &tcb_probe->control_msg_q,
+                    tcb_probe->control_msg_buffer,
+                    sizeof(control_msg_s*),
+                    CONFIG_MODALITY_PROBE_CONTROL_PLANE_MESSAGE_QUEUE_SIZE);
+            TRACE_DEBUG_PRINTF("trace: Allocated control plane message queue for thread '%s'\n", k_thread_name_get(thread));
+        }
+
+        TRACE_EXIT_CRITICAL_SECTION();
+    }
+}
+
+int trace_process_control_plane_message(void)
+{
+    size_t err;
+    size_t should_forward;
+    int q_ret = -ENOMSG;
+    tcb_probe_s* tcb_probe = NULL;
+    modality_probe* probe = NULL;
+    struct k_msgq* msgq = NULL;
+    control_msg_s* msg = NULL;
+    int msgs_in_queue = 0;
+    TRACE_ALLOC_CRITICAL_SECTION();
+
+    TRACE_ENTER_CRITICAL_SECTION();
+
+    tcb_probe = get_tcb_probe(k_current_get());
+    if(tcb_probe != NULL)
+    {
+        probe = tcb_probe->probe;
+        msgq = &tcb_probe->control_msg_q;
+    }
+
+    TRACE_EXIT_CRITICAL_SECTION();
+
+    if((msgq != NULL) && (msgq->max_msgs != 0))
+    {
+        q_ret = k_msgq_get(msgq, &msg, K_NO_WAIT);
+        msgs_in_queue = (k_msgq_num_used_get(msgq) != 0);
+    }
+
+    if((q_ret == 0) && (msg != NULL))
+    {
+        TRACE_ENTER_CRITICAL_SECTION();
+
+        err = modality_probe_process_control_message(
+                probe,
+                msg->data,
+                CONFIG_MODALITY_PROBE_IO_THREAD_BUFFER_SIZE,
+                &should_forward);
+
+        TRACE_EXIT_CRITICAL_SECTION();
+
+        unref_control_msg(msg);
+
+        TRACE_DEBUG_PRINTF(
+                "trace: Thread %s processed a control message\n", k_thread_name_get(k_current_get()));
+
+        TRACE_ASSERT(err == 0, "Failed to process Modality probe control message", msgs_in_queue);
+    }
+
+    return msgs_in_queue;
+}
+#endif /* CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE */
+
 /* Private functions */
 void trace_error(const char* msg)
 {
@@ -152,7 +253,7 @@ void trace_error(const char* msg)
     if(g_error_msg == NULL)
     {
         g_error_msg = msg;
-        TRACE_DEBUG_PRINTF("TRACE ERROR: %s\n", msg);
+        TRACE_DEBUG_PRINTF("trace: ERROR: %s\n", msg);
     }
 }
 
@@ -178,7 +279,7 @@ void trace_register_thread_probe(k_tid_t thread, uint32_t priority)
 
             if(is_excluded == 0)
             {
-                TRACE_DEBUG_PRINTF("Registering probe ID %lu for task '%s'\n", (unsigned long) probe_id, task_name);
+                TRACE_DEBUG_PRINTF("trace: Registering probe ID %lu for thread '%s'\n", (unsigned long) probe_id, task_name);
                 probe = alloc_probe(CONFIG_MODALITY_PROBE_THREAD_PROBE_SIZE, (uint32_t) probe_id);
             }
 
@@ -187,7 +288,7 @@ void trace_register_thread_probe(k_tid_t thread, uint32_t priority)
                 add_tcb_probe(thread, (uint32_t) probe_id, probe);
 
                 err = modality_probe_record_event_with_payload(probe, TRACE_EVENT_THREAD_CREATE, priority);
-                TRACE_ASSERT(err == 0, "Failed to record initial task creation event", MPT_UNUSED);
+                TRACE_ASSERT(err == 0, "Failed to record initial thread creation event", MPT_UNUSED);
             }
         }
     }
@@ -208,7 +309,7 @@ void trace_produce_snapshot(void)
         tcb_probe = get_tcb_probe(g_current_tcb);
         TRACE_ASSERT(
                 tcb_probe != NULL,
-                "No tcb_probe_s associated with the current task (1)",
+                "No tcb_probe_s associated with the current thread (1)",
                 MPT_UNUSED);
 
         if(tcb_probe != NULL)
@@ -236,13 +337,13 @@ void trace_merge_snapshot(void)
         curr = get_tcb_probe(g_current_tcb);
         TRACE_ASSERT(
                 curr != NULL,
-                "No tcb_probe_s associated with the current task (2)",
+                "No tcb_probe_s associated with the current thread (2)",
                 MPT_UNUSED);
 
         prev = get_tcb_probe(g_prev_tcb);
         TRACE_ASSERT(
                 prev != NULL,
-                "No tcb_probe_s associated with the previous task",
+                "No tcb_probe_s associated with the previous thread",
                 MPT_UNUSED);
 
         err = modality_probe_merge_snapshot(curr->probe, &prev->snapshot);
@@ -266,7 +367,7 @@ void trace_log_event(uint32_t id)
         tcb_probe = get_tcb_probe(g_current_tcb);
         TRACE_ASSERT(
                 tcb_probe != NULL,
-                "No tcb_probe_s associated with the current task (3)",
+                "No tcb_probe_s associated with the current thread (3)",
                 MPT_UNUSED);
 
         if(tcb_probe != NULL)
@@ -293,7 +394,7 @@ void trace_log_event_with_payload(uint32_t id, uint32_t payload)
         tcb_probe = get_tcb_probe(g_current_tcb);
         TRACE_ASSERT(
                 tcb_probe != NULL,
-                "No tcb_probe_s associated with the current task (4)",
+                "No tcb_probe_s associated with the current thread (4)",
                 MPT_UNUSED);
 
         if(tcb_probe != NULL)
@@ -392,6 +493,9 @@ static void add_tcb_probe(k_tid_t thread, uint32_t probe_id, modality_probe* pro
             g_tcb_probes[i].tcb = thread;
             g_tcb_probes[i].probe_id = probe_id;
             g_tcb_probes[i].probe = probe;
+#ifdef CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE
+            g_tcb_probes[i].control_msg_q.max_msgs = 0;
+#endif
             thread->custom_data = &g_tcb_probes[i];
             slot_was_found = 1;
             break;
@@ -432,8 +536,8 @@ static uint16_t probe_id_hash(const char* task_name, uint8_t length)
     unsigned char x;
     uint16_t crc = 0xFFFF;
 
-    TRACE_ASSERT(task_name != NULL, "Task name must not be NULL", 0);
-    TRACE_ASSERT(length != 0, "Task name length == 0", 0);
+    TRACE_ASSERT(task_name != NULL, "Thread name must not be NULL", 0);
+    TRACE_ASSERT(length != 0, "Thread name length == 0", 0);
 
     while(length-- != 0)
     {
@@ -445,12 +549,49 @@ static uint16_t probe_id_hash(const char* task_name, uint8_t length)
     return crc;
 }
 
+#ifdef CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE
+static control_msg_s* alloc_control_msg(void)
+{
+    control_msg_s* msg = TRACE_ALIGNED_ALLOC(4, sizeof(control_msg_s));
+    TRACE_ASSERT(msg != NULL, "Failed to allocate control message", NULL);
+
+    if(msg != NULL)
+    {
+        msg->refcount = ATOMIC_INIT(0);
+    }
+
+    return msg;
+}
+
+static void ref_control_msg(control_msg_s* msg)
+{
+    if(msg != NULL)
+    {
+        (void) atomic_inc(&msg->refcount);
+    }
+}
+
+static void unref_control_msg(control_msg_s* msg)
+{
+    if(msg != NULL)
+    {
+        atomic_val_t prev = atomic_dec(&msg->refcount);
+
+        // No more references, went from 1 -> 0
+        if(prev == 1)
+        {
+            TRACE_FREE(msg);
+        }
+    }
+}
+#endif /* CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE */
+
 #ifdef CONFIG_MODALITY_PROBE_DO_STARTUP_INITIALIZATION
 static int trace_pre_kernel_init(const struct device *dev)
 {
     (void) dev;
 
-    TRACE_DEBUG_PRINTF("Initializing tracing\n");
+    TRACE_DEBUG_PRINTF("trace: Initializing tracing\n");
     trace_enable();
     trace_exclude_thread("idle 00");
     trace_exclude_thread("logging");
@@ -500,13 +641,13 @@ static void io_thread_entry(void *p1, void *p2, void *p3)
     (void) p1;
     (void) p2;
     (void) p3;
-    size_t err;
     int32_t status;
     int32_t num_bytes;
-    uint32_t target_probe_id;
+    size_t err;
     uint16_t iters = 0;
+    uint32_t target_probe_id;
 
-    TRACE_DEBUG_PRINTF("Tracing IO thread started\n");
+    TRACE_DEBUG_PRINTF("trace: Tracing IO thread started\n");
 
 #if (MODALITY_PROBE_IO_THREAD_STARTUP_DELAY_MS != 0)
     k_msleep(CONFIG_MODALITY_PROBE_IO_THREAD_STARTUP_DELAY_MS);
@@ -527,9 +668,20 @@ static void io_thread_entry(void *p1, void *p2, void *p3)
 
         if((status == 0) && (num_bytes > 0))
         {
-            /* TODO - control plane processing, task buffers and task-local processing method */
-            (void) err;
-            (void) target_probe_id;
+            err = modality_probe_get_control_message_destination(
+                    &g_io_buffer[0],
+                    (size_t) num_bytes,
+                    &target_probe_id);
+            if(err != 0)
+            {
+                TRACE_DEBUG_PRINTF("trace: TRACE_IO_READ recieved invalid control message (err=%zu)\n", err);
+            }
+            else
+            {
+#ifdef CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE
+                io_thread_distribute_control_messages(target_probe_id, (size_t) num_bytes);
+#endif /* CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE */
+            }
         }
 
         /* Send probe reports */
@@ -547,6 +699,49 @@ static void io_thread_entry(void *p1, void *p2, void *p3)
         iters += 1;
     }
 }
+
+#ifdef CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE
+static void io_thread_distribute_control_messages(uint32_t target_probe_id, size_t num_bytes)
+{
+    int i;
+    int err;
+    control_msg_s* control_msg = alloc_control_msg();
+
+    if(control_msg != NULL)
+    {
+        (void) memcpy(control_msg->data, g_io_buffer, num_bytes);
+        ref_control_msg(control_msg);
+
+        for(i = 0; i < CONFIG_MODALITY_PROBE_MAX_PROBES; i += 1)
+        {
+            if((g_tcb_probes[i].tcb != NULL) && (g_tcb_probes[i].control_msg_q.max_msgs != 0))
+            {
+                if((target_probe_id == MODALITY_PROBE_ID_BROADCAST) || (target_probe_id == g_tcb_probes[i].probe_id))
+                {
+                    ref_control_msg(control_msg);
+                    err = k_msgq_put(&g_tcb_probes[i].control_msg_q, &control_msg, K_NO_WAIT);
+                    if(err != 0)
+                    {
+                        unref_control_msg(control_msg);
+                        TRACE_DEBUG_PRINTF(
+                                "trace: Control message buffer send for thead '%s' timed out\n",
+                                k_thread_name_get(g_tcb_probes[i].tcb));
+
+                    }
+                    else
+                    {
+                        TRACE_DEBUG_PRINTF(
+                                "trace: Sent control message to thread '%s'\n",
+                                k_thread_name_get(g_tcb_probes[i].tcb));
+                    }
+                }
+            }
+        }
+
+        unref_control_msg(control_msg);
+    }
+}
+#endif /* CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE */
 
 static void io_thread_probe_report_iter_fn(modality_probe* probe)
 {
@@ -578,7 +773,7 @@ static void io_thread_probe_report_iter_fn(modality_probe* probe)
 
         if(num_bytes != (int32_t) report_size_bytes)
         {
-            TRACE_DEBUG_PRINTF("TRACE_IO_WRITE sent partial report buffer\n");
+            TRACE_DEBUG_PRINTF("trace: TRACE_IO_WRITE sent partial report buffer\n");
         }
     }
 }
@@ -613,7 +808,7 @@ static void io_thread_probe_mutator_announcement_iter_fn(modality_probe* probe)
 
         if(num_bytes != (int32_t) anncmnt_size_bytes)
         {
-            TRACE_DEBUG_PRINTF("TRACE_IO_WRITE sent partial mutator announcement buffer\n");
+            TRACE_DEBUG_PRINTF("trace: TRACE_IO_WRITE sent partial mutator announcement buffer\n");
         }
     }
 }

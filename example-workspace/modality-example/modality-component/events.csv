@@ -23,5 +23,5 @@ component_id,id,name,description,tags,type_hint,file,line
 0acf9a64-951b-4bc0-a32d-e58af6845291,65530,THREAD_SLEEP,Zephyr thread sleep,Zephyr;thread,u32,,
 0acf9a64-951b-4bc0-a32d-e58af6845291,65529,THREAD_MSLEEP,Zephyr thread msleep,Zephyr;thread,i32,,
 0acf9a64-951b-4bc0-a32d-e58af6845291,65528,THREAD_USLEEP,Zephyr thread usleep,Zephyr;thread,i32,,
-0acf9a64-951b-4bc0-a32d-e58af6845291,65536,PRODUCING,Producing message,app;ipc,u32,main.c,57
-0acf9a64-951b-4bc0-a32d-e58af6845291,65537,RX_MSG,Received message,EXPECTATION;SEVERITY_10;app;ipc,u32,main.c,89
+0acf9a64-951b-4bc0-a32d-e58af6845291,65536,PRODUCING,Producing message,app;ipc,u32,main.c,62
+0acf9a64-951b-4bc0-a32d-e58af6845291,65537,RX_MSG,Received message,EXPECTATION;SEVERITY_10;app;ipc,u32,main.c,94

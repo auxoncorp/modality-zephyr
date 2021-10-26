@@ -112,56 +112,74 @@ config MODALITY_PROBE_INCLUDE_IO_THREAD
 if MODALITY_PROBE_INCLUDE_IO_THREAD
 
     config MODALITY_PROBE_IO_THREAD_NAME
-    string "IO thread name"
-    default "ModalityProbeIo"
-    help
-      The IO thread name.
+        string "IO thread name"
+        default "ModalityProbeIo"
+        help
+          The IO thread name.
 
     config MODALITY_PROBE_IO_THREAD_STACK_SIZE
-    int "IO thread stack size"
-    range 512 65535
-    default 2048
-    help
-      The stack size, in bytes, of the internal IO thread.
+        int "IO thread stack size"
+        range 512 65535
+        default 2048
+        help
+          The stack size, in bytes, of the internal IO thread.
 
     config MODALITY_PROBE_IO_THREAD_PRIORITY
-    int "IO thread priority"
-    range -32 32
-    default 8
-    help
-      The priority of the internal IO thread.
+        int "IO thread priority"
+        range -32 32
+        default 8
+        help
+          The priority of the internal IO thread.
 
     config MODALITY_PROBE_IO_THREAD_BUFFER_SIZE
-    int "IO thread data buffer size"
-    range 64 65535
-    default 512
-    help
-      The size, in bytes, of the internal buffer used by the IO thread for
-      reports, mutator announcements, and control plane buffering.
+        int "IO thread data buffer size"
+        range 64 65535
+        default 512
+        help
+          The size, in bytes, of the internal buffer used by the IO thread for
+          reports, mutator announcements, and control plane buffering.
 
     config MODALITY_PROBE_IO_THREAD_STARTUP_DELAY_MS
-    int "IO thread startup milliseconds delay"
-    range 0 1000000000
-    default 20
-    help
-      The number of milliseconds used to `k_msleep()` in the IO thread before it begins its loop.
+        int "IO thread startup milliseconds delay"
+        range 0 1000000000
+        default 20
+        help
+          The number of milliseconds used to `k_msleep()` in the IO thread before it begins its loop.
 
     config MODALITY_PROBE_IO_THREAD_DELAY_MS
-    int "IO thread loop milliseconds delay"
-    range 0 1000000000
-    default 50
-    help
-       The number of milliseconds used to `k_msleep()` in the IO thread loop.
-       This effectively defines the IO polling and reporting interval.
+        int "IO thread loop milliseconds delay"
+        range 0 1000000000
+        default 50
+        help
+           The number of milliseconds used to `k_msleep()` in the IO thread loop.
+           This effectively defines the IO polling and reporting interval.
 
     config MODALITY_PROBE_IO_THREAD_ITERS_PER_MUTATOR_ANNOUNCEMENT
-    int "IO thread loop iterations per mutator announcements"
-    range 1 1000000000
-    default 20
-    help
-      The number of iterations in the IO thread before reporting mutator announcements.
-      Mutator announcements only need to be reported once, but doing it occasionally
-      is recommended if the IO transport is lossy.
+        int "IO thread loop iterations per mutator announcements"
+        range 1 1000000000
+        default 20
+        help
+          The number of iterations in the IO thread before reporting mutator announcements.
+          Mutator announcements only need to be reported once, but doing it occasionally
+          is recommended if the IO transport is lossy.
+
+    config MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE
+        bool "Allocate control plane message queues"
+        depends on !MODALITY_PROBE_USE_STATIC_ALLOCATION
+        help
+          When enabled, threads may opt-in to control plane message handling by
+          calling `trace_alloc_control_plane_message_queue()`.
+          Control plane messages may be processed by calling `trace_process_control_plane_message()`.
+
+if MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE
+    config MODALITY_PROBE_CONTROL_PLANE_MESSAGE_QUEUE_SIZE
+        int "Capacity of the control plane message queues"
+        range 1 32
+        default 4
+        help
+          The capacity of control plane message queues.
+          Each message can buffer up to `MODALITY_PROBE_IO_THREAD_BUFFER_SIZE` bytes.
+endif # MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE
 
 endif # MODALITY_PROBE_INCLUDE_IO_THREAD
 

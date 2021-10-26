@@ -26,6 +26,10 @@ extern "C" {
 #define TRACE_MALLOC(size) k_malloc(size)
 #endif
 
+#ifndef TRACE_ALIGNED_ALLOC
+#define TRACE_ALIGNED_ALLOC(align, size) k_aligned_alloc(align, size)
+#endif
+
 #ifndef TRACE_FREE
 #define TRACE_FREE(ptr) k_free(ptr)
 #endif
