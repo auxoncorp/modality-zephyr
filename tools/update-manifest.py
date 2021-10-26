@@ -15,7 +15,7 @@ from crccheck.crc import Crc16Ibm3740
 
 # Most of the events have u32 payloads, this is a list of events that don't
 EVENTS_WITHOUT_PAYLOADS = [
-    'TRACE_EVENT_TASK_SWITCHED_OUT',
+    'TRACE_EVENT_THREAD_SWITCHED_OUT',
     'TRACE_EVENT_MUTEX_GIVE',
     'TRACE_EVENT_MUTEX_GIVE_BLOCKED',
     'TRACE_EVENT_MUTEX_GIVE_FAILED',
@@ -26,9 +26,10 @@ EVENTS_WITHOUT_PAYLOADS = [
 
 # Most of the events with payloads are u32, this is a list of of events that have signed payloads
 EVENTS_WITH_SIGNED_PAYLOADS = [
-    'TRACE_EVENT_TASK_SWITCHED_IN',
-    'TRACE_EVENT_TASK_MSLEEP',
-    'TRACE_EVENT_TASK_USLEEP',
+    'TRACE_EVENT_THREAD_CREATE',
+    'TRACE_EVENT_THREAD_SWITCHED_IN',
+    'TRACE_EVENT_THREAD_MSLEEP',
+    'TRACE_EVENT_THREAD_USLEEP',
 ]
 
 def remove_prefix(text, prefix):
@@ -65,14 +66,14 @@ def parse_zephyr_trace_event_definitions(header_file_path):
             events.append(event)
     return events
 
-def hash_task_name_to_probe_id(task_name):
-    return Crc16Ibm3740.calc(str.encode(task_name))
+def hash_thread_name_to_probe_id(thread_name):
+    return Crc16Ibm3740.calc(str.encode(thread_name))
 
 parser = argparse.ArgumentParser(description='Updates Modality component manifest files to include Zephyr events and probes.')
 parser.add_argument('-c', '--component', type=str, required=True, help='Path to component directory')
 parser.add_argument('-n', '--component-name', type=str, required=False, default='modality-component',
         help='Modality component name')
-parser.add_argument('-t', '--task-names', nargs='+', default=[], help='List of task names to add as probes')
+parser.add_argument('-t', '--thread-names', nargs='+', default=[], help='List of thread names to add as probes')
 args = parser.parse_args()
 
 root_dir = pathlib.Path(__file__).parent.resolve().parent
@@ -107,13 +108,13 @@ for trace_event in trace_events:
     cli_args.append('--external-event')
     cli_args.append('{}'.format(json.dumps(ext_event)))
 
-for task_name in args.task_names:
-    probe_id = int(hash_task_name_to_probe_id(task_name))
-    canonical_name = task_name.replace(' ', '_').replace('-', '_').upper()
+for thread_name in args.thread_names:
+    probe_id = int(hash_thread_name_to_probe_id(thread_name))
+    canonical_name = thread_name.replace(' ', '_').replace('-', '_').upper()
     ext_probe = {
         'id': probe_id,
         'name': canonical_name,
-        'description': "Zephyr task '{}'".format(task_name),
+        'description': "Zephyr thread '{}'".format(thread_name),
         'tags': 'Zephyr;task',
     }
     cli_args.append('--external-probe')

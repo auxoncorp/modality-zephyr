@@ -64,7 +64,6 @@ config MODALITY_PROBE_USE_TRACE_ASSERT
 
 config MODALITY_PROBE_USE_STATIC_ALLOCATION
     bool "Static allocation mode"
-    default y
     help
       When enabled, Modality probe and tracing resources are allocated statically.
       Otherwise resources are allocated using `TRACE_MALLOC()`, and free'd using `TRACE_FREE()`.
@@ -88,7 +87,7 @@ config MODALITY_PROBE_THREAD_PROBE_SIZE
 
 config MODALITY_PROBE_MAX_PROBES
 	int "Size of the probe registry"
-    default 2
+    default 8
 	help
       The maximun number of Modality probes available to the system.
       Unless excluded with `trace_exclude_thread()`, each thread will be allocated a Modality probe.

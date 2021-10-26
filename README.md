@@ -65,7 +65,6 @@ In the meantime, our fork is available [here](https://github.com/auxoncorp/zephy
   ```
   ```text
   Initializing tracing
-  Registering probe ID 29717 for task 'main'
   *** Booting Zephyr OS build zephyr-v2.6.0-1-ge6858b1f2010  ***
   Registering probe ID 63422 for task 'consumer_thread'
   Registering probe ID 45765 for task 'producer_thread'
@@ -93,18 +92,54 @@ In the meantime, our fork is available [here](https://github.com/auxoncorp/zephy
   ```bash
   modality log
   ```
+  ```text
+  ║  *  ║  (45765:1:0:1, THREAD_CREATE @ PRODUCER_THREAD, payload=-1)
+  ║  ║  ║
+  ║  ║  *  (63422:1:0:1, THREAD_CREATE @ CONSUMER_THREAD, payload=-1)
+  ║  ║  ║
+  ║  *  ║  (45765:1:0:2, THREAD_SWITCHED_IN @ PRODUCER_THREAD, payload=-1)
+  ║  ║  ║
+  ║  *  ║  (45765:1:0:3, PRODUCING @ PRODUCER_THREAD, payload=0)
+  ║  ║  ║
+  ║  *  ║  (45765:1:0:4, THREAD_SLEEP @ PRODUCER_THREAD, payload=50)
+  ║  ║  ║
+  ║  *  ║  (45765:1:0:5, THREAD_SWITCHED_OUT @ PRODUCER_THREAD)
+  ║  ║  ║
+  ║  ╚═»╗  PRODUCER_THREAD interacted with CONSUMER_THREAD
+  ║  ║  ║
+  ║  ║  *  (63422:2:0:3, THREAD_SWITCHED_IN @ CONSUMER_THREAD, payload=-1)
+  ║  ║  ║
+  ║  ║  *  (63422:2:0:4, RX_MSG @ CONSUMER_THREAD, outcome=PASS)
+  ║  ║  ║
+  ║  ║  *  (63422:2:0:5, THREAD_SWITCHED_OUT @ CONSUMER_THREAD)
+  ║  ║  ║
+  ║  ╔«═╝  CONSUMER_THREAD interacted with PRODUCER_THREAD
+  ║  ║  ║
+  ║  *  ║  (45765:3:1:3, THREAD_SWITCHED_IN @ PRODUCER_THREAD, payload=-1)
+  ║  ║  ║
+  ║  *  ║  (45765:3:1:4, PRODUCING @ PRODUCER_THREAD, payload=1)
+  ║  ║  ║
+  ║  *  ║  (45765:3:1:5, THREAD_SLEEP @ PRODUCER_THREAD, payload=50)
+  ║  ║  ║
+  ║  *  ║  (45765:3:1:6, THREAD_SWITCHED_OUT @ PRODUCER_THREAD)
+  ║  ║  ║
+  ║  ╚═»╗  PRODUCER_THREAD interacted with CONSUMER_THREAD
+  .  .  .
+  .  .  .
+  .  .  .
+  ```
 
 ## Updating Modality Component Manifests
 
 Run the [tools/update-manifest.py](tools/update-manifest.py) script to
-add the Zephyr tracing event and thread probe definitions to a Modality component.
-
+add the Zephyr tracing event and thread probe definitions to a Modality component
+or once initially to create a new Modality component.
 Probe IDs are generated from a hash of their associated thread name.
 
 ```bash
 ./tools/update-manifest.py \
     --component modality-component \
-    --task-names "consumer_thread" "producer_thread"
+    --thread-names "consumer_thread" "producer_thread"
 ```
 
 ## LICENSE

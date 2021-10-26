@@ -186,7 +186,7 @@ void trace_register_thread_probe(k_tid_t thread, uint32_t priority)
             {
                 add_tcb_probe(thread, (uint32_t) probe_id, probe);
 
-                err = modality_probe_record_event_with_payload(probe, TRACE_EVENT_TASK_CREATE, priority);
+                err = modality_probe_record_event_with_payload(probe, TRACE_EVENT_THREAD_CREATE, priority);
                 TRACE_ASSERT(err == 0, "Failed to record initial task creation event", MPT_UNUSED);
             }
         }
@@ -744,7 +744,7 @@ void sys_trace_k_thread_switched_out(void)
 {
     if(trace_thread_is_registered(NULL))
     {
-        trace_log_event(TRACE_EVENT_TASK_SWITCHED_OUT);
+        trace_log_event(TRACE_EVENT_THREAD_SWITCHED_OUT);
         trace_produce_snapshot();
     }
 }
@@ -757,7 +757,7 @@ void sys_trace_k_thread_switched_in(void)
         {
             trace_merge_snapshot();
         }
-        trace_log_event_with_payload(TRACE_EVENT_TASK_SWITCHED_IN, (uint32_t) k_current_get()->base.prio);
+        trace_log_event_with_payload(TRACE_EVENT_THREAD_SWITCHED_IN, (uint32_t) k_current_get()->base.prio);
     }
 }
 
@@ -769,22 +769,22 @@ void sys_trace_k_thread_switched_in(void)
 
 void sys_trace_k_thread_suspend(struct k_thread *thread)
 {
-    REC_WU32_IF(TRACE_EVENT_TASK_SUSPEND, (uint32_t) thread)
+    REC_WU32_IF(TRACE_EVENT_THREAD_SUSPEND, (uint32_t) thread)
 }
 
 void sys_trace_k_thread_sleep_enter(k_timeout_t timeout)
 {
-    REC_WU32_IF(TRACE_EVENT_TASK_SLEEP, (uint32_t) timeout.ticks)
+    REC_WU32_IF(TRACE_EVENT_THREAD_SLEEP, (uint32_t) timeout.ticks)
 }
 
 void sys_trace_k_thread_msleep_enter(int32_t ms)
 {
-    REC_WU32_IF(TRACE_EVENT_TASK_MSLEEP, (uint32_t) ms)
+    REC_WU32_IF(TRACE_EVENT_THREAD_MSLEEP, (uint32_t) ms)
 }
 
 void sys_trace_k_thread_usleep_enter(int32_t us)
 {
-    REC_WU32_IF(TRACE_EVENT_TASK_USLEEP, (uint32_t) us)
+    REC_WU32_IF(TRACE_EVENT_THREAD_USLEEP, (uint32_t) us)
 }
 
 #endif /* CONFIG_MODALITY_PROBE_TRACING */
