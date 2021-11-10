@@ -62,9 +62,15 @@ extern const char TRACE_IO_THREAD_NAME[];
 #endif
 
 #ifdef CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE
-/* Allocate internal control plane message queue for this thread's probe (if the thread is being traced) */
+/*
+ * Allocate internal control plane message queue for this thread's probe (if the thread is being traced).
+ */
 void trace_alloc_control_plane_message_queue(void);
-/* Returns 0 if the queue is empty, 1 if queue still has messages to process */
+
+/*
+ * Process a control plane message from the threads queue, if one exists.
+ * Returns 0 if the queue is empty, 1 if queue still has messages to process.
+ */
 int trace_process_control_plane_message(void);
 #else /* CONFIG_MODALITY_PROBE_USE_CONTROL_PLANE_MESSAGE_QUEUE == 0 */
 #define trace_alloc_control_plane_message_queue() MPT_NOOP_STATEMENT
@@ -73,12 +79,45 @@ int trace_process_control_plane_message(void);
 
 #endif /* CONFIG_MODALITY_PROBE_INCLUDE_IO_THREAD */
 
+/*
+ * Enable tracing.
+ *
+ * Tracing is enabled automatically when
+ * CONFIG_MODALITY_PROBE_DO_STARTUP_INITIALIZATION is set.
+ */
 void trace_enable(void);
+
+/*
+ * Disable tracing.
+ */
 void trace_disable(void);
+
+/*
+ * Returns 0 is tracing is disabled, otherwise returns 1.
+ */
 int trace_is_enabled(void);
+
+/*
+ * Retrieve the error string pointer or NULL.
+ */
 const char* trace_get_error(void);
+
+/*
+ * Exclude a thread by name from being traced.
+ * Must be called prior to creating the thread.
+ */
 void trace_exclude_thread(const char* name);
+
+/*
+ * Retrieve the Modality probe pointer associated with
+ * the calling thread.
+ * Returns NULL if the calling thread is not being traced.
+ */
 modality_probe* trace_get_thread_probe(void);
+
+/*
+ * Calls the iterator function for each probe in the global registry.
+ */
 void trace_probe_iterator(trace_probe_iterator_function_t iterator_function);
 
 #ifdef CONFIG_MODALITY_PROBE_USE_TRACE_ASSERT
